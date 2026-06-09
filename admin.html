@@ -391,27 +391,24 @@ const TARGET_SHEET_URL = "https://docs.google.com/spreadsheets/d/151P8cOl1oi6r39
 const TARGET_SHEET_ID = "151P8cOl1oi6r399jBJjdLErvDhtHnccaavdlki0JC9k";
 
 const POOLS = {
-  "DEW": { name: "Dew Oil", desc: "Light & Glow", ratios: { A:84.5, B:9.0, C:4.5, D:0.0, F:1.5, G:0.5 } },
-  "PARFUME": { name: "Perfume Oil", desc: "Scent Focus", ratios: { A:84.0, B:8.0, C:2.5, D:0.0, F:5.0, G:0.5 } },
-  "DRY": { name: "Dry Oil", desc: "Quick Absorb", ratios: { A:78.2, B:17.0, C:3.4, D:0.0, F:1.0, G:0.4 } },
-  "SUNSCREEN": { name: "Sunscreen Oil", desc: "UV Defense", ratios: { A:75.2, B:17.0, C:2.8, D:4.0, F:0.5, G:0.5 } },
-  "SLEEP": { name: "Sleep Oil", desc: "Therapy", ratios: { A:88.5, B:6.5, C:3.6, D:0.0, F:0.8, G:0.6 } }
+  "DEW": { name: "Dew Oil", desc: "Light & Glow", ratios: { A:84.5, B:9.0, C:4.5, F:1.5, G:0.5 } },
+  "PARFUME": { name: "Perfume Oil", desc: "Scent Focus", ratios: { A:84.0, B:8.0, C:2.5, F:5.0, G:0.5 } },
+  "DRY": { name: "Dry Oil", desc: "Quick Absorb", ratios: { A:78.2, B:17.0, C:3.4, F:1.0, G:0.4 } },
+  "SLEEP": { name: "Sleep Oil", desc: "Therapy", ratios: { A:88.5, B:6.5, C:3.6, F:0.8, G:0.6 } }
 };
 
 const PRESETS = {
   "DEW": { A:{"Paraffinum Liquidum":40.50,"Rice Bran Oil (Refine)":44.00}, B:{"Triethylhexanoin":4.00,"Isononyl Isononanoate":2.00,"Ethylhexyl Palmitate":3.00,"Castor Oil (Refine)":0.80} },
   "PARFUME": { A:{"Paraffinum Liquidum":84.00}, B:{"Triethyl Citrate":3.00,"C12-15 Alkyl Benzoate":2.50,"Dicaprylyl Carbonate":2.50} },
   "DRY": { A:{"Paraffinum Liquidum":38.20,"Sunflower Oil (Refine)":40.00}, B:{"IPM":4.00,"Isononyl Isononanoate":6.00,"C12-15 Alkyl Benzoate":4.00,"Dicaprylyl Carbonate":3.00} },
-  "SUNSCREEN": { A:{"Paraffinum Liquidum":37.20,"Soybean Oil (Refine)":38.00}, B:{"C12-15 Alkyl Benzoate":8.00,"Isononyl Isononanoate":3.00,"IPM":3.00,"Dicaprylyl Carbonate":3.00}, D:{"OMC (UVB)":3.00,"Octocrylene":0.50,"Avobenzone (UVA)":0.50} },
   "SLEEP": { A:{"Rice Bran Oil (Refine)":28.50,"Soybean Oil (Refine)":20.00,"Sunflower Oil (Refine)":40.00}, B:{"Triethylhexanoin":5.00,"Ethylhexyl Palmitate":1.00,"Dicaprylyl Carbonate":0.50} }
 };
 
 // MASTER DB
 const MASTER_DB = [
-  // A, B, D
+  // A, B
   {p:"A", n:"Paraffinum Liquidum", i:"Paraffinum Liquidum", c:47.08}, {p:"A", n:"Rice Bran Oil (Refine)", i:"Oryza Sativa Bran Oil", c:57.51}, {p:"A", n:"Soybean Oil (Refine)", i:"Glycine Soja Oil", c:62.00}, {p:"A", n:"Sunflower Oil (Refine)", i:"Helianthus Annuus Seed Oil", c:69.00},
   {p:"B", n:"IPM", i:"Isopropyl Myristate", c:145}, {p:"B", n:"C12-15 Alkyl Benzoate", i:"C12-15 Alkyl Benzoate", c:412}, {p:"B", n:"Ethylhexyl Palmitate", i:"Ethylhexyl Palmitate", c:263}, {p:"B", n:"Triethyl Citrate", i:"Triethyl Citrate", c:787}, {p:"B", n:"Isoamyl Laurate", i:"Isoamyl Laurate", c:1021}, {p:"B", n:"Triethylhexanoin", i:"Triethylhexanoin", c:535}, {p:"B", n:"Isononyl Isononanoate", i:"Isononyl Isononanoate", c:455}, {p:"B", n:"Dicaprylyl Carbonate", i:"Dicaprylyl Carbonate", c:745}, {p:"B", n:"Castor Oil (Refine)", i:"Ricinus Communis Seed Oil", c:172},
-  {p:"D", n:"OMC (UVB)", i:"Ethylhexyl Methoxycinnamate", c:909.5}, {p:"D", n:"Octocrylene", i:"Octocrylene", c:1195}, {p:"D", n:"Avobenzone (UVA)", i:"Butyl Methoxydibenzoylmethane", c:1284},
 
   // C
   {p:"C", grp:"1. Basic / Carrier", n:"Coconut Oil", i:"Cocos Nucifera Oil", c:180, k:"SILKY GLOW"},
@@ -991,7 +988,7 @@ function updateSystem() {
   let bom = []; 
 
   // 1. Fixed Parts
-  ['A','B','D'].forEach(p => {
+  ['A','B'].forEach(p => {
     if(preset[p]) {
       for(let [n, v] of Object.entries(preset[p])) {
         let ref = MASTER_DB.find(x => x.n === n);
