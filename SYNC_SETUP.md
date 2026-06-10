@@ -20,22 +20,24 @@
 
 ## 2) ผูกเข้าหน้าเว็บ
 
-1. เปิดหน้าหลังบ้าน `admin.html`
-2. ไป `Back Office`
-3. ช่อง `Google Sheet Web App URL` วาง URL `/exec` ที่ได้จากข้อ 1
-4. ระบบจะ autosave และเริ่ม sync ทันที
+1. เปิดไฟล์ `index.html`
+2. ตรวจค่า `WEB_APP_URL`
+3. วาง URL `/exec` ที่ได้จากข้อ 1 เป็นค่า `WEB_APP_URL`
+4. deploy ขึ้น GitHub Pages
 
-หน้าใช้งานสำหรับลูกค้าคือ URL root ของ GitHub Pages หรือ `index.html` ส่วน `admin.html` ใช้สำหรับพนักงาน/หลังบ้านเท่านั้น
+หน้าใช้งานสำหรับลูกค้าคือ URL root ของ GitHub Pages หรือ `index.html`
+
+โปรเจคนี้ไม่มีหน้า `admin.html` แล้ว ข้อมูลหลังบ้านให้ดูจาก Google Sheet / ไฟล์ `.xlsx` ที่ sync ข้อมูลมาจากลูกค้าโดยตรง
 
 ## 3) ทดสอบ
 
-1. เปิดหน้า `Back Office`
-2. กด `Test Sync`
-3. กลับไปดู Google Sheet จะมีแท็บ `Orders` และ `Items` เพิ่มอัตโนมัติ
-4. ถ้าทดสอบผ่าน ให้สร้างออเดอร์จริงในหน้า Front Booth แล้วกด `Print & Save Order`
+1. เปิดหน้าเว็บลูกค้า
+2. กรอกข้อมูลลูกค้าทดสอบ เลือกสูตร เลือก Active Oil และ Fragrance
+3. กดยืนยันเพื่อส่งข้อมูลเข้า Google Sheet
+4. กลับไปดู Google Sheet จะมีแท็บ `Orders` และ `Items` เพิ่มอัตโนมัติ
 
 ## หมายเหตุ
 
 - ถ้าเน็ตหลุด ระบบจะเข้าคิวในเครื่องและ retry ให้อัตโนมัติ
-- ถ้ามีคิวค้างในเครื่อง ให้กด `Retry Sync` ในหน้า Back Office
-- ถ้า deploy script ใหม่ อย่าลืมอัปเดต URL `/exec` ใน Back Office
+- ถ้ามีคิวค้างในเครื่อง ให้เปิดหน้าเว็บเดิมอีกครั้ง ระบบจะ retry เมื่อ online
+- ถ้า deploy script ใหม่ อย่าลืมอัปเดต URL `/exec` ในไฟล์ `index.html`

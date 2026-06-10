@@ -4,10 +4,10 @@
 
 UNPUN Formula Studio supports a workshop flow where a customer scans a QR code, enters basic contact information, selects a body oil formula, chooses active oils and fragrance, confirms consent, and receives a printed bottle label. The same order data is sent to the RD team for production through the connected sheet workflow.
 
-## Experience Split
+## Experience Model
 
-- Customer page: premium, calm, mobile-friendly, and non-technical.
-- Admin page: structured, dense, operational, and easy for staff to scan.
+- Single customer-facing page: premium, calm, mobile-friendly, and non-technical.
+- Operational review happens in the synced spreadsheet, not in a separate web admin page.
 - Printed outputs: strict black-and-white production artifacts, optimized for label and RD formula sheet clarity.
 
 ## Visual Direction
@@ -24,7 +24,7 @@ UNPUN Formula Studio supports a workshop flow where a customer scans a QR code, 
 - Technical part codes may remain visible for RD traceability, but the primary text must be human-readable.
 - Cost can be visible to customers as an estimated workshop cost.
 - The customer page must not expose sheet IDs, webhook setup, retry sync, export, or order history.
-- The admin page may expose sync and operational controls.
+- Back-office data review should happen in the connected spreadsheet.
 
 ## Formula Part Language
 
@@ -40,10 +40,9 @@ UNPUN Formula Studio supports a workshop flow where a customer scans a QR code, 
   - Left side: guided steps and order controls.
   - Right side: live label preview.
   - Bottom action area: estimated cost and confirm action.
-- Admin page:
-  - Mode switch and dashboard KPIs are allowed.
-  - Keep tables compact with sticky headers.
-  - Back-office controls should use neutral styling and clear hierarchy.
+- RD / owner review:
+  - Use the synced spreadsheet for order status, cost review, and production tracking.
+  - Keep private operational controls out of the customer web page.
 
 ## Tone
 
