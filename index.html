@@ -37,6 +37,9 @@
     .stage-kicker { font-size:0.68rem; color:var(--amber); font-weight:900; text-transform:uppercase; margin-bottom:5px; }
     .stage-title { font-size:1rem; font-weight:900; color:var(--ink); margin-bottom:4px; }
     .stage-copy { font-size:0.78rem; color:var(--muted); line-height:1.45; }
+    .guide-note { border:1px solid #d7c6a8; background:#fff8ea; color:#6f4a16; border-radius:8px; padding:10px; font-size:0.76rem; line-height:1.45; }
+    .formula-total { display:flex; justify-content:space-between; align-items:center; gap:10px; border:1px solid var(--line); background:#fff; border-radius:8px; padding:10px 12px; font-size:0.84rem; font-weight:800; }
+    .formula-total b { font-size:1rem; }
     
     .form-group { display: flex; flex-direction: column; gap: 8px; border:1px solid var(--line); background:#fff; border-radius:8px; padding:12px; }
     .form-label { font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--muted); letter-spacing: 0.5px; display: flex; justify-content: space-between; align-items: center; }
@@ -220,29 +223,64 @@
       </div>
 
       <div class="form-group" data-step="2">
-        <label class="form-label">เลือกสูตรหลัก</label>
+        <label class="form-label">เลือกแนวทางสูตร</label>
         <select id="selFormula" class="form-select" onchange="changeFormula()"></select>
         <div id="formulaDesc" style="font-size:0.75rem; color:#64748b;"></div>
+        <div id="guideNote" class="guide-note"></div>
+        <div class="formula-total">
+          <span>สูตรรวมทั้งหมด</span>
+          <b id="status-total">0.00% / 100%</b>
+        </div>
       </div>
 
       <div class="form-group" data-step="2">
-        <label class="form-label"><span>Active Oils (C)</span><span id="status-C" class="status-bar">Target: 0%</span></label>
-        <input type="search" id="search-C" class="form-input" placeholder="Search oils..." oninput="filterList('C')" />
+        <label class="form-label"><span>Base Oils (A)</span><span id="status-A" class="status-bar">Guide: 0%</span></label>
+        <input type="search" id="search-A" class="form-input" placeholder="Search base oils..." oninput="filterList('A')" />
+        <div class="mini-actions">
+           <button class="mini-btn secondary" onclick="clearPart('A')">Clear</button>
+           <button class="mini-btn" onclick="qsPart('A')">Fill to Guide</button>
+        </div>
+        <div class="selection-list" id="list-A"></div>
+      </div>
+
+      <div class="form-group" data-step="2">
+        <label class="form-label"><span>Texture / Emollient (B)</span><span id="status-B" class="status-bar">Guide: 0%</span></label>
+        <input type="search" id="search-B" class="form-input" placeholder="Search texture oils..." oninput="filterList('B')" />
+        <div class="mini-actions">
+           <button class="mini-btn secondary" onclick="clearPart('B')">Clear</button>
+           <button class="mini-btn" onclick="qsPart('B')">Fill to Guide</button>
+        </div>
+        <div class="selection-list" id="list-B"></div>
+      </div>
+
+      <div class="form-group" data-step="2">
+        <label class="form-label"><span>Active Oils (C)</span><span id="status-C" class="status-bar">Guide: 0%</span></label>
+        <input type="search" id="search-C" class="form-input" placeholder="Search active oils..." oninput="filterList('C')" />
         <div class="mini-actions">
            <button class="mini-btn secondary" onclick="clearPart('C')">Clear</button>
-           <button class="mini-btn" onclick="qsPart('C')">Auto Fill QS</button>
+           <button class="mini-btn" onclick="qsPart('C')">Fill to Guide</button>
         </div>
         <div class="selection-list" id="list-C"></div>
       </div>
 
       <div class="form-group" data-step="2">
-        <label class="form-label"><span>Fragrance (D)</span><span id="status-D" class="status-bar">Target: 0%</span></label>
+        <label class="form-label"><span>Fragrance (D)</span><span id="status-D" class="status-bar">Guide: 0%</span></label>
         <input type="search" id="search-D" class="form-input" placeholder="Search fragrances..." oninput="filterList('D')" />
         <div class="mini-actions">
            <button class="mini-btn secondary" onclick="clearPart('D')">Clear</button>
-           <button class="mini-btn" onclick="qsPart('D')">Auto Fill QS</button>
+           <button class="mini-btn" onclick="qsPart('D')">Fill to Guide</button>
         </div>
         <div class="selection-list" id="list-D"></div>
+      </div>
+
+      <div class="form-group" data-step="2">
+        <label class="form-label"><span>Antioxidant (E)</span><span id="status-E" class="status-bar">Guide: 0%</span></label>
+        <input type="search" id="search-E" class="form-input" placeholder="Search antioxidant..." oninput="filterList('E')" />
+        <div class="mini-actions">
+           <button class="mini-btn secondary" onclick="clearPart('E')">Clear</button>
+           <button class="mini-btn" onclick="qsPart('E')">Fill to Guide</button>
+        </div>
+        <div class="selection-list" id="list-E"></div>
         <div class="step-actions">
           <button class="mini-btn secondary" onclick="setStep(1)">Back: Customer</button>
           <button class="mini-btn" onclick="goToStep3()">Next: Review</button>
@@ -358,11 +396,13 @@ const POOLS = {
   "SLEEP": { name: "Sleep Oil", desc: "Therapy", ratios: { A:88.5, B:6.5, C:3.6, D:0.8, E:0.6 } }
 };
 
-const PRESETS = {
-  "DEW": { A:{"Mineral Oil":42.50,"Rice Bran Oil":42.00}, B:{"Squalane":3.00,"CCT":3.00,"C12-15 Alkyl Benzoate":3.00} },
-  "PARFUME": { A:{"Mineral Oil":84.00}, B:{"IPM":3.00,"CCT":2.50,"C12-15 Alkyl Benzoate":2.50} },
-  "DRY": { A:{"Mineral Oil":38.20,"Sunflower Seed Oil":40.00}, B:{"IPM":6.00,"CCT":5.00,"C12-15 Alkyl Benzoate":4.00,"Squalane":2.00} },
-  "SLEEP": { A:{"Rice Bran Oil":35.00,"Sunflower Seed Oil":33.50,"Olive Oil":20.00}, B:{"Squalane":3.00,"CCT":2.00,"IPM":1.50} }
+const FORMULA_PARTS = ["A", "B", "C", "D", "E"];
+const PART_LABELS = {
+  A: "Base Oil",
+  B: "Texture / Emollient",
+  C: "Active Oils",
+  D: "Fragrance",
+  E: "Antioxidant"
 };
 
 // MASTER DB
@@ -430,15 +470,14 @@ function init() {
   document.getElementById('rcpDate').innerText = new Date().toLocaleDateString('th-TH');
   document.getElementById('customerCode').value = makeCustomerCode();
   
-  renderList('C');
-  renderList('D');
+  FORMULA_PARTS.forEach(part => renderList(part));
   setStep(1);
   applyCustomerParamsFromURL();
   if (!loadDraft()) changeFormula();
-  const sC = document.getElementById('search-C');
-  const sF = document.getElementById('search-D');
-  sC.addEventListener('input', debounce(() => filterList('C'), 120));
-  sF.addEventListener('input', debounce(() => filterList('D'), 120));
+  FORMULA_PARTS.forEach(part => {
+    const search = document.getElementById(`search-${part}`);
+    if (search) search.addEventListener('input', debounce(() => filterList(part), 120));
+  });
 }
 
 function debounce(fn, delay = 150) {
@@ -478,7 +517,7 @@ function goToStep2() {
 
 function goToStep3() {
   if (document.getElementById('formulaWarning').classList.contains('show')) {
-    setSubmitStatus("สูตรยังไม่ครบ target กรุณาปรับก่อน", "err");
+    setSubmitStatus("สูตรรวมต้องครบ 100% ก่อนยืนยัน", "err");
     return;
   }
   clearSubmitStatus();
@@ -509,8 +548,10 @@ function applyCustomerParamsFromURL() {
 }
 
 function quickFillBoth() {
-  qsPart('C');
-  qsPart('D');
+  FORMULA_PARTS.forEach(part => {
+    const hasSelected = MASTER_DB.some((it, idx) => it.p === part && document.getElementById(`chk-${idx}`)?.checked);
+    if (hasSelected) qsPart(part);
+  });
 }
 
 function makeCustomerCode() {
@@ -685,7 +726,7 @@ function validateBeforeSubmit() {
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.push("Invalid email");
   const phone = document.getElementById('custPhone').value.trim();
   if (phone && !/^[0-9+\-\s()]{8,20}$/.test(phone)) errors.push("Invalid phone");
-  if (document.getElementById('formulaWarning').classList.contains('show')) errors.push("Formula target not matched");
+  if (document.getElementById('formulaWarning').classList.contains('show')) errors.push("Formula total must be 100%");
   if (!document.getElementById('consentCheck').checked) errors.push("Consent required");
   return errors;
 }
@@ -782,8 +823,9 @@ function renderList(part) {
     const idx = MASTER_DB.indexOf(item);
     let row = document.createElement('div');
     row.className = 'item-row';
-    row.dataset.search = `${item.n} ${item.i} ${item.grp || ""} ${item.k || ""}`.toLowerCase();
-    let extraMeta = (part === 'C') ? `<div class="item-benefit">${item.k}</div>` : '';
+    row.dataset.search = `${item.n} ${item.i} ${item.grp || ""} ${item.k || ""} ${item.code || ""} ${item.supplierCode || ""}`.toLowerCase();
+    const itemTags = [item.code, item.supplierCode, item.k].filter(Boolean).join(" · ");
+    let extraMeta = itemTags ? `<div class="item-benefit">${itemTags}</div>` : '';
     row.innerHTML = `
       <input type="checkbox" id="chk-${idx}" onchange="toggleIn(${idx})" />
       <div class="item-info">
@@ -833,17 +875,18 @@ function clearPart(part) {
   updateSystem();
 }
 
+function getGuideText(pool) {
+  return FORMULA_PARTS
+    .map(part => `${part} ${PART_LABELS[part]} ~ ${pool.ratios[part]}%`)
+    .join(" / ");
+}
+
 function changeFormula() {
   const fKey = document.getElementById('selFormula').value;
   const pool = POOLS[fKey];
   document.getElementById('formulaDesc').innerText = pool.desc;
-  MASTER_DB.forEach((it, idx) => {
-    if(it.p === 'C' || it.p === 'D') {
-      const chk = document.getElementById(`chk-${idx}`);
-      const pct = document.getElementById(`pct-${idx}`);
-      if(chk) { chk.checked = false; pct.value = 0; pct.disabled = true; }
-    }
-  });
+  const guide = document.getElementById('guideNote');
+  if (guide) guide.innerText = `แนวทางแนะนำ: ${getGuideText(pool)} ลูกค้าปรับเองได้ ขอให้รวม 100%`;
   updateSystem();
 }
 
@@ -859,7 +902,7 @@ function qsPart(part) {
   const fKey = document.getElementById('selFormula').value;
   const target = POOLS[fKey].ratios[part];
   const activeObjs = MASTER_DB.map((x,i)=>({x,i})).filter(o => o.x.p===part && document.getElementById(`chk-${o.i}`).checked);
-  if(activeObjs.length === 0) { alert(`Pick at least one item in Part ${part}`); return; }
+  if(activeObjs.length === 0) { alert(`เลือกวัตถุดิบอย่างน้อย 1 รายการในกลุ่ม ${part} ก่อน`); return; }
   let cur = activeObjs.reduce((sum, o) => sum + parseFloat(document.getElementById(`pct-${o.i}`).value||0), 0);
   let missing = target - cur;
   if(missing > 0) {
@@ -872,7 +915,6 @@ function qsPart(part) {
 function updateSystem() {
   const fKey = document.getElementById('selFormula').value;
   const pool = POOLS[fKey];
-  const preset = PRESETS[fKey];
   const custName = document.getElementById('custName').value;
   const custLastName = document.getElementById('custLastName').value;
   const custPhone = document.getElementById('custPhone').value;
@@ -880,21 +922,13 @@ function updateSystem() {
   const netWeight = getNetWeight();
 
   let bom = []; 
+  let sums = FORMULA_PARTS.reduce((acc, part) => {
+    acc[part] = 0;
+    return acc;
+  }, {});
 
-  // 1. Fixed Parts
-  ['A','B'].forEach(p => {
-    if(preset[p]) {
-      for(let [n, v] of Object.entries(preset[p])) {
-        let ref = MASTER_DB.find(x => x.n === n);
-        if(ref) bom.push({...ref, val:v});
-      }
-    }
-  });
-  
-  // 2. Variable Parts
-  let sums = {C:0, D:0};
   MASTER_DB.forEach((it, idx) => {
-    if(it.p === 'C' || it.p === 'D') {
+    if(FORMULA_PARTS.includes(it.p)) {
       const chk = document.getElementById(`chk-${idx}`);
       if(chk && chk.checked) {
         let v = parseFloat(document.getElementById(`pct-${idx}`).value || 0);
@@ -906,22 +940,21 @@ function updateSystem() {
     }
   });
 
-  // 3. E
-  bom.push({n:"BHT", i:"BHT", c:375, val:0.1});
-  bom.push({n:"Vit E", i:"Tocopheryl Acetate", c:1357, val: pool.ratios.E - 0.1});
-
-  // 4. Status
-  let formulaOk = true;
-  ['C','D'].forEach(p => {
+  const totalPct = FORMULA_PARTS.reduce((sum, part) => sum + sums[part], 0);
+  const formulaOk = Math.abs(totalPct - 100) < 0.05;
+  FORMULA_PARTS.forEach(p => {
     const el = document.getElementById(`status-${p}`);
-    const t = pool.ratios[p];
+    if (!el) return;
+    const guide = pool.ratios[p];
     const s = sums[p];
-    el.innerText = `${s.toFixed(2)}% / ${t}%`;
-    el.className = Math.abs(s-t)<0.05 ? "status-bar ok" : "status-bar err";
-    if (Math.abs(s - t) >= 0.05) formulaOk = false;
+    el.innerText = `${s.toFixed(2)}% / guide ${guide}%`;
+    el.className = "status-bar";
+    if (Math.abs(s - guide) < 0.05) el.classList.add("ok");
   });
+  const totalEl = document.getElementById('status-total');
+  totalEl.innerText = `${totalPct.toFixed(2)}% / 100%`;
+  totalEl.className = formulaOk ? "status-bar ok" : "status-bar err";
 
-  // 5. Calc
   let cost = 0;
   let inci = [];
   bom.forEach(b => {
@@ -946,18 +979,19 @@ function updateSystem() {
   document.getElementById('txtBatchCost').innerText = `Batch cost: ${Math.ceil(batchCost).toLocaleString()} THB / ${netWeight.toLocaleString()}g`;
 
   const warningEl = document.getElementById('formulaWarning');
-  warningEl.textContent = formulaOk ? "" : "Formula ยังไม่ครบ target ของ Active Oils หรือ Fragrance";
+  warningEl.textContent = formulaOk ? "" : `สูตรรวมต้องครบ 100% ตอนนี้ ${totalPct.toFixed(2)}%`;
   warningEl.classList.toggle('show', !formulaOk);
 
   // Smart Naming
-  const ac = bom.find(x => x.p === 'C');
-  let benefitName = ac ? ac.k : "NATURAL"; 
+  const ac = bom.find(x => x.p === 'C') || bom.find(x => x.p === 'D') || bom.find(x => x.p === 'A') || bom[0];
+  let benefitName = ac ? (ac.k || ac.n) : "CUSTOM"; 
   let formulaName = pool.name.toUpperCase();
   let tStr = `${benefitName} ${formulaName}`.trim().toUpperCase();
   document.getElementById('lblTitle').innerText = tStr;
 
   // Max 5 Hero
-  let heroes = bom.filter(x => x.p==='C').sort((a,b)=>b.c - a.c).slice(0,5); 
+  let heroes = bom.filter(x => x.p==='C').sort((a,b)=>b.val - a.val).slice(0,5);
+  if (!heroes.length) heroes = bom.filter(x => x.p !== 'E').sort((a,b)=>b.val - a.val).slice(0,5);
   document.getElementById('lblHero').innerHTML = heroes.map(h =>
     `<div class="hero-row"><span class="hero-name">• ${h.n}</span><span class="hero-pct">${h.val.toFixed(2)}%</span></div>`
   ).join("");
@@ -994,7 +1028,7 @@ function updateSystem() {
 function collectSelectedParts() {
   const selected = {};
   MASTER_DB.forEach((it, idx) => {
-    if (it.p === 'C' || it.p === 'D') {
+    if (FORMULA_PARTS.includes(it.p)) {
       const chk = document.getElementById(`chk-${idx}`);
       const pct = document.getElementById(`pct-${idx}`);
       if (chk && chk.checked) selected[idx] = parseFloat(pct.value || 0);
@@ -1036,7 +1070,7 @@ function loadDraft() {
     document.getElementById('customerCode').value = draft.customerCode || makeCustomerCode();
     document.getElementById('consentCheck').checked = !!draft.consent;
     document.getElementById('batchInput').value = draft.batch || makeBatchNo();
-    document.getElementById('formulaDesc').innerText = POOLS[document.getElementById('selFormula').value].desc;
+    changeFormula();
 
     Object.entries(draft.selected || {}).forEach(([idx, val]) => {
       const chk = document.getElementById(`chk-${idx}`);
@@ -1070,10 +1104,12 @@ function newOrder() {
   document.getElementById('consentCheck').checked = false;
   document.getElementById('customerCode').value = makeCustomerCode();
   document.getElementById('batchInput').value = makeBatchNo();
-  document.getElementById('search-C').value = "";
-  document.getElementById('search-D').value = "";
-  filterList('C');
-  filterList('D');
+  FORMULA_PARTS.forEach(part => {
+    const search = document.getElementById(`search-${part}`);
+    if (search) search.value = "";
+    filterList(part);
+    clearPart(part);
+  });
   suppressDraftSave = false;
   clearSubmitStatus();
   setStep(1);

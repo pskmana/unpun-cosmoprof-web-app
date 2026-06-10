@@ -2,7 +2,7 @@
 
 ## Product Use Case
 
-UNPUN Formula Studio supports a workshop flow where a customer scans a QR code, enters basic contact information, selects a body oil formula, chooses active oils and fragrance, confirms consent, and receives a printed bottle label. The same order data is sent to the RD team for production through the connected sheet workflow.
+UNPUN Formula Studio supports a workshop flow where a customer scans a QR code, enters basic contact information, selects a body oil direction as a guide, builds a full 100% formula from all ingredient groups, confirms consent, and receives a printed bottle label. The same order data is sent to the RD team for production through the connected sheet workflow.
 
 ## Experience Model
 
@@ -25,6 +25,7 @@ UNPUN Formula Studio supports a workshop flow where a customer scans a QR code, 
 - Cost can be visible to customers as an estimated workshop cost.
 - The customer page must not expose sheet IDs, webhook setup, retry sync, export, or order history.
 - Back-office data review should happen in the connected spreadsheet.
+- Dew Oil, Perfume Oil, Dry Oil, and Sleep Oil are guide archetypes only. They suggest approximate group ratios but should not lock ingredient choices.
 
 ## Formula Part Language
 
