@@ -81,6 +81,9 @@
     .btn-print { width: 100%; background: white; color: var(--ink); border: none; padding: 12px; border-radius: 8px; font-weight: 800; margin-top: 10px; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
     .btn-print:hover { background: #ddd; }
     .btn-print:active { background: #bbb; }
+    .btn-print.secondary { background:#334155; color:white; }
+    .btn-print.label-only { background:#fff; color:var(--ink); }
+    .btn-print.sheet-only { background:#f8f0df; color:#5c3b10; }
     .small-note { font-size: 0.7rem; color: #94a3b8; }
     .submit-status { margin-top:10px; border-radius:6px; padding:8px 10px; font-size:0.74rem; font-weight:700; display:none; }
     .submit-status.show { display:block; }
@@ -165,21 +168,28 @@
       #label-area { 
         width: var(--label-w);
         height: var(--label-h);
+        page: ql-label;
         box-shadow: none; margin: 0; 
         transform: none;
         page-break-after: always; /* Force Label on Page 1 */
       }
       .crop-mark { display:block; }
+      body.print-label-only #label-area { page-break-after: auto; }
+      body.print-label-only #receipt-area { display: none; }
+      body.print-sheet-only #label-area { display: none; }
       
       #receipt-area { 
         display: block; /* Show Receipt */
         width: var(--ql-roll-w); 
+        page: ql-sheet;
         border: none;
         margin: 0;
         page-break-after: auto;
       }
       
       @page { margin: 0; } 
+      @page ql-label { size: 62mm 65mm; margin: 0; }
+      @page ql-sheet { size: 62mm 200mm; margin: 0; }
     }
   </style>
 </head>
@@ -322,8 +332,9 @@
       <div id="formulaWarning" class="warning-line"></div>
       <div id="submitStatus" class="submit-status"></div>
       <div id="reviewActions" style="display:none;">
-        <button class="btn-print" onclick="handlePrint()">Confirm & Print 62mm Label + Production Sheet</button>
-        <button class="btn-print" style="background:#334155; color:white;" onclick="newOrder()">New Order</button>
+        <button class="btn-print label-only" onclick="handlePrintLabel()">Confirm & Print Label 62x65</button>
+        <button class="btn-print sheet-only" onclick="handlePrintSheet()">Print Production Sheet 62mm</button>
+        <button class="btn-print secondary" onclick="newOrder()">New Order</button>
       </div>
     </div>
   </div>
@@ -1128,8 +1139,24 @@ function newOrder() {
   changeFormula();
 }
 
-function handlePrint() {
-  submitOrder({ printAfter: true });
+function handlePrintLabel() {
+  submitOrder({ printMode: "label" });
+}
+
+function handlePrintSheet() {
+  submitOrder({ printMode: "sheet" });
+}
+
+function printOutput(mode) {
+  document.body.classList.toggle("print-label-only", mode === "label");
+  document.body.classList.toggle("print-sheet-only", mode === "sheet");
+  const cleanup = () => {
+    document.body.classList.remove("print-label-only", "print-sheet-only");
+    window.removeEventListener("afterprint", cleanup);
+  };
+  window.addEventListener("afterprint", cleanup);
+  window.print();
+  setTimeout(cleanup, 1500);
 }
 
 function getSyncTargets() {
@@ -1283,9 +1310,9 @@ async function processQueue({ force = false } = {}) {
   updateSyncStatusUI();
 }
 
-async function submitOrder({ printAfter = false } = {}) {
+async function submitOrder({ printMode = "" } = {}) {
   if (isSubmitting) return;
-  const submitBtn = document.querySelector('.btn-print');
+  const submitBtns = Array.from(document.querySelectorAll('.btn-print'));
   const errors = validateBeforeSubmit();
   if (errors.length) {
     setSubmitStatus(`กรุณาตรวจสอบข้อมูล: ${errors.join(", ")}`, "err");
@@ -1294,24 +1321,29 @@ async function submitOrder({ printAfter = false } = {}) {
   }
 
   isSubmitting = true;
-  submitBtn.disabled = true;
-  submitBtn.style.opacity = "0.6";
+  submitBtns.forEach(btn => {
+    btn.disabled = true;
+    btn.style.opacity = "0.6";
+  });
   clearSubmitStatus();
 
   try {
     const payload = getOrderPayload();
     if (wasSent(payload.orderId)) {
-      setSubmitStatus("ออเดอร์นี้ถูกส่งแล้ว ระบบกันการส่งซ้ำอัตโนมัติ", "warn");
+      setSubmitStatus("ออเดอร์นี้เคยส่งเข้า Sheet แล้ว กำลังเปิดหน้าพิมพ์", "warn");
+      if (printMode) printOutput(printMode);
       return;
     }
 
     saveOrderLocal(payload);
     await sendDataToSheet(payload);
-    if (printAfter) window.print();
+    if (printMode) printOutput(printMode);
   } finally {
     isSubmitting = false;
-    submitBtn.disabled = false;
-    submitBtn.style.opacity = "1";
+    submitBtns.forEach(btn => {
+      btn.disabled = false;
+      btn.style.opacity = "1";
+    });
   }
 }
 
