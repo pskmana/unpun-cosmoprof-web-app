@@ -1180,6 +1180,7 @@ function exportBrotherCSV(data) {
     .join(" | ");
   const ingredients = [...new Set(data.formulaItems.map(item => item.inci).filter(Boolean))].join(", ");
   const headers = [
+    "RECORD_TYPE",
     "PRODUCT_NAME",
     "CUSTOMER_NAME",
     "BATCH",
@@ -1193,6 +1194,7 @@ function exportBrotherCSV(data) {
     "QR_URL"
   ];
   const row = [
+    "PRINT",
     data.product,
     data.customer,
     data.batch,
@@ -1205,7 +1207,13 @@ function exportBrotherCSV(data) {
     data.formula,
     getCustomerLink()
   ];
-  const csv = [headers.map(csvCell).join(","), row.map(csvCell).join(",")].join("\n");
+  const backupRow = [...row];
+  backupRow[0] = "BACKUP";
+  const csv = [
+    headers.map(csvCell).join(","),
+    row.map(csvCell).join(","),
+    backupRow.map(csvCell).join(",")
+  ].join("\n");
   downloadTextFile(`brother-label-${safeFilePart(data.batch)}-${safeFilePart(data.customerCode)}.csv`, csv);
   setSubmitStatus("ส่งข้อมูลแล้ว และดาวน์โหลดไฟล์ Brother CSV แล้ว", "ok");
 }
