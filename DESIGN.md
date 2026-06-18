@@ -9,7 +9,7 @@ UNPUN Formula Studio supports a workshop flow where a customer scans a QR code, 
 - Single customer-facing page: premium, calm, mobile-friendly, and non-technical.
 - Operational review happens in the synced spreadsheet, not in a separate web admin page.
 - Printed outputs: strict black-and-white production artifacts, optimized for label and RD formula sheet clarity.
-- Print media target: Brother QL-800 with 62 mm continuous black/red-white adhesive roll. Bottle label uses 62 x 65 mm; production sheet uses 62 mm roll width with receipt-style flow.
+- Print media target: Brother QL-800 with 62 mm Black/Red adhesive roll. P-touch Editor detects the media as `62mm Black/Red`; the customer flow exports a compact Brother label PNG plus CSV/RD text files instead of relying on browser direct print, because CUPS/browser print can report Brother paper-size errors with this roll.
 
 ## Visual Direction
 

@@ -16,6 +16,7 @@
       --label-w: 62mm;
       --label-h: 100mm;
       --ql-roll-w: 62mm;
+      --ql-page-h: 184mm;
       --print-red: #d71920;
     }
     body { font-family: 'Inter', 'Sarabun', sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; overflow: hidden; color: var(--ink); }
@@ -188,8 +189,8 @@
       }
       
       @page { margin: 0; } 
-      @page ql-label { size: 62mm 100mm; margin: 0; }
-      @page ql-sheet { size: 62mm 100mm; margin: 0; }
+      @page ql-label { size: 62mm 184mm; margin: 0; }
+      @page ql-sheet { size: 62mm 184mm; margin: 0; }
     }
   </style>
 </head>
@@ -332,8 +333,8 @@
       <div id="formulaWarning" class="warning-line"></div>
       <div id="submitStatus" class="submit-status"></div>
       <div id="reviewActions" style="display:none;">
-        <button class="btn-print label-only" onclick="handleBrotherExport()">Confirm & Export Brother CSV</button>
-        <button class="btn-print sheet-only" onclick="handlePrintSheet()">Print Production Sheet 62mm</button>
+        <button class="btn-print label-only" onclick="handleBrotherExport()">Confirm & Download Brother Label</button>
+        <button class="btn-print sheet-only" onclick="handlePrintSheet()">Download RD Production Sheet</button>
         <button class="btn-print secondary" onclick="newOrder()">New Order</button>
       </div>
     </div>
@@ -1144,7 +1145,7 @@ function handleBrotherExport() {
 }
 
 function handlePrintSheet() {
-  submitOrder({ printMode: "sheet" });
+  submitOrder({ exportSheet: true });
 }
 
 function csvCell(value) {
@@ -1164,6 +1165,111 @@ function downloadTextFile(filename, text, type = "text/csv;charset=utf-8") {
   a.click();
   a.remove();
   URL.revokeObjectURL(a.href);
+}
+
+function downloadBlob(filename, blob) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(a.href);
+}
+
+function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight, maxLines = 3) {
+  const words = String(text || "").split(/\s+/).filter(Boolean);
+  const lines = [];
+  let line = "";
+  words.forEach(word => {
+    const testLine = line ? `${line} ${word}` : word;
+    if (ctx.measureText(testLine).width > maxWidth && line) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = testLine;
+    }
+  });
+  if (line) lines.push(line);
+  lines.slice(0, maxLines).forEach((drawLine, index) => {
+    const finalLine = index === maxLines - 1 && lines.length > maxLines ? `${drawLine.replace(/\.*$/, "")}...` : drawLine;
+    ctx.fillText(finalLine, x, y + index * lineHeight);
+  });
+}
+
+function exportBrotherLabelPNG(data) {
+  const pxPerMm = 12;
+  const width = 62 * pxPerMm;
+  const height = 28 * pxPerMm;
+  const pad = 22;
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, width, height);
+  ctx.strokeStyle = "#111111";
+  ctx.lineWidth = 4;
+  ctx.strokeRect(6, 6, width - 12, height - 12);
+
+  ctx.fillStyle = "#d71920";
+  ctx.fillRect(0, 0, width, 48);
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "700 24px Arial";
+  ctx.fillText("UNPUN INDUSTRY", pad, 32);
+
+  ctx.fillStyle = "#111111";
+  ctx.font = "900 28px Arial";
+  wrapCanvasText(ctx, data.product, pad, 88, width - pad * 2, 30, 2);
+
+  ctx.font = "700 19px Arial";
+  ctx.fillText(`Customer: ${data.customer || "-"}`, pad, 164);
+  ctx.fillText(`Batch: ${data.batch || "-"}`, pad, 192);
+  ctx.fillText(`Net: ${data.netWeight || 100}g`, pad, 220);
+
+  const heroItems = data.formulaItems
+    .filter(item => item.part === "C")
+    .sort((a, b) => Number(b.pct || 0) - Number(a.pct || 0))
+    .slice(0, 3);
+  const fallbackItems = data.formulaItems
+    .filter(item => item.part !== "E")
+    .sort((a, b) => Number(b.pct || 0) - Number(a.pct || 0))
+    .slice(0, 3);
+  const featured = (heroItems.length ? heroItems : fallbackItems)
+    .map(item => `${item.ingredient} ${item.pct}%`)
+    .join(" | ");
+  ctx.font = "600 17px Arial";
+  wrapCanvasText(ctx, featured, pad, 258, width - pad * 2, 22, 2);
+
+  ctx.font = "600 14px Arial";
+  ctx.fillText(data.customerCode || "", pad, height - 22);
+  canvas.toBlob(blob => {
+    if (blob) downloadBlob(`brother-label-${safeFilePart(data.batch)}-${safeFilePart(data.customerCode)}.png`, blob);
+  }, "image/png");
+}
+
+function exportProductionSheetTXT(data) {
+  const lines = [
+    "UNPUN INDUSTRY - RD PRODUCTION SHEET",
+    `Batch: ${data.batch}`,
+    `Customer: ${data.customer}`,
+    `Customer Code: ${data.customerCode}`,
+    `Product: ${data.product}`,
+    `Net Weight: ${data.netWeight}g`,
+    `Cost/kg: ${data.cost} THB`,
+    `Batch Cost: ${data.batchCost} THB`,
+    "",
+    "Formula",
+    ...data.formulaItems.map(item => `${item.part}. ${item.ingredient} - ${item.pct}%`),
+    "",
+    `Summary: ${data.formula}`,
+    `Customer URL: ${getCustomerLink()}`
+  ];
+  downloadTextFile(
+    `rd-production-${safeFilePart(data.batch)}-${safeFilePart(data.customerCode)}.txt`,
+    lines.join("\n"),
+    "text/plain;charset=utf-8"
+  );
 }
 
 function exportBrotherCSV(data) {
@@ -1215,7 +1321,9 @@ function exportBrotherCSV(data) {
     backupRow.map(csvCell).join(",")
   ].join("\n");
   downloadTextFile(`brother-label-${safeFilePart(data.batch)}-${safeFilePart(data.customerCode)}.csv`, csv);
-  setSubmitStatus("ส่งข้อมูลแล้ว และดาวน์โหลดไฟล์ Brother CSV แล้ว", "ok");
+  exportBrotherLabelPNG(data);
+  exportProductionSheetTXT(data);
+  setSubmitStatus("ส่งข้อมูลแล้ว และดาวน์โหลดไฟล์ Brother Label PNG + CSV + RD Sheet แล้ว", "ok");
 }
 
 function printOutput(mode) {
@@ -1311,7 +1419,7 @@ async function sendDataToSheet(data) {
 
   markSent(data.orderId);
   rememberSyncStatus("sent");
-  setSubmitStatus("ส่งสูตรเรียบร้อย กำลังเปิดหน้าพิมพ์", "ok");
+  setSubmitStatus("ส่งสูตรเรียบร้อย", "ok");
   const st = document.getElementById('saveStatus');
   st.style.display = 'block';
   setTimeout(() => st.style.display = 'none', 3000);
@@ -1381,7 +1489,7 @@ async function processQueue({ force = false } = {}) {
   updateSyncStatusUI();
 }
 
-async function submitOrder({ printMode = "", exportBrother = false } = {}) {
+async function submitOrder({ printMode = "", exportBrother = false, exportSheet = false } = {}) {
   if (isSubmitting) return;
   const submitBtns = Array.from(document.querySelectorAll('.btn-print'));
   const errors = validateBeforeSubmit();
@@ -1401,8 +1509,9 @@ async function submitOrder({ printMode = "", exportBrother = false } = {}) {
   try {
     const payload = getOrderPayload();
     if (wasSent(payload.orderId)) {
-      setSubmitStatus("ออเดอร์นี้เคยส่งเข้า Sheet แล้ว กำลังเตรียมไฟล์/หน้าพิมพ์", "warn");
+      setSubmitStatus("ออเดอร์นี้เคยส่งเข้า Sheet แล้ว กำลังเตรียมไฟล์", "warn");
       if (exportBrother) exportBrotherCSV(payload);
+      if (exportSheet) exportProductionSheetTXT(payload);
       if (printMode) printOutput(printMode);
       return;
     }
@@ -1410,6 +1519,7 @@ async function submitOrder({ printMode = "", exportBrother = false } = {}) {
     saveOrderLocal(payload);
     await sendDataToSheet(payload);
     if (exportBrother) exportBrotherCSV(payload);
+    if (exportSheet) exportProductionSheetTXT(payload);
     if (printMode) printOutput(printMode);
   } finally {
     isSubmitting = false;
