@@ -13,6 +13,10 @@
       --surface:#ffffff; --line:#ded8ce; --line-strong:#c8bcae; --green:#0f5f4c;
       --green-soft:#e6f4ef; --amber:#b9812f; --danger:#991b1b; --ok:#166534;
       --shadow: 0 18px 48px rgba(23,33,31,0.10);
+      --label-w: 62mm;
+      --label-h: 65mm;
+      --ql-roll-w: 62mm;
+      --print-red: #d71920;
     }
     body { font-family: 'Inter', 'Sarabun', sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; overflow: hidden; color: var(--ink); }
 
@@ -92,10 +96,10 @@
     
     /* LABEL STYLE */
     #label-area {
-      width: var(--label-w, 3.5cm); height: var(--label-h, 6.5cm); background: white; padding: 2.8mm; box-sizing: border-box;
+      width: var(--label-w); height: var(--label-h); background: white; padding: 3mm; box-sizing: border-box;
       position: relative; color: black; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
       display: grid; grid-template-rows: auto auto auto 1fr auto; overflow: hidden; margin-bottom: 220px;
-      transform: scale(3); transform-origin: center top;
+      transform: scale(2.35); transform-origin: center top;
       border: 0.7px solid #000;
       font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
     }
@@ -106,40 +110,44 @@
     .crop-mark.br { bottom:-1px; right:-1px; border-bottom:0.6px solid #000; border-right:0.6px solid #000; transform: translate(2.6mm,2.6mm); }
     .lbl-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 0.7px solid #000; padding-bottom: 1mm; margin-bottom: 1.1mm; min-height: 9.5mm; }
     .lbl-brand-wrap { display:flex; align-items:center; gap:1mm; }
-    .lbl-logo { width: 5.2mm; height: 5.2mm; object-fit: contain; }
-    .lbl-brand { font-weight: 800; font-size: 5.8pt; line-height: 1.02; letter-spacing: 0.2px; }
-    .lbl-title-box { border: 0.7px solid #000; padding: 1.1mm 0.8mm; text-align: center; margin-bottom: 1.1mm; display:flex; align-items:center; justify-content:center; min-height: 10mm; }
-    .lbl-title { font-weight: 900; font-size: 5.8pt; line-height: 1.1; text-transform: uppercase; letter-spacing: 0.15px; word-wrap: break-word; }
-    .lbl-featured-head { font-size: 4.2pt; font-weight: 800; letter-spacing: 0.4px; text-transform: uppercase; margin-bottom: 0.9mm; }
-    .lbl-hero { font-size: 4.3pt; font-weight: 600; line-height: 1.38; display:flex; flex-direction:column; gap:0.45mm; margin-bottom: 0.8mm; }
+    .lbl-logo { width: 6.2mm; height: 6.2mm; object-fit: contain; }
+    .lbl-brand { font-weight: 800; font-size: 7pt; line-height: 1.02; letter-spacing: 0.2px; }
+    .lbl-title-box { border: 0.8px solid var(--print-red); padding: 1.2mm 1mm; text-align: center; margin-bottom: 1.1mm; display:flex; align-items:center; justify-content:center; min-height: 11mm; }
+    .lbl-title { font-weight: 900; font-size: 8pt; line-height: 1.08; text-transform: uppercase; letter-spacing: 0.15px; word-wrap: break-word; }
+    .lbl-featured-head { font-size: 5.3pt; font-weight: 800; letter-spacing: 0.4px; text-transform: uppercase; margin-bottom: 0.9mm; color: var(--print-red); }
+    .lbl-hero { font-size: 5.1pt; font-weight: 600; line-height: 1.34; display:flex; flex-direction:column; gap:0.45mm; margin-bottom: 0.8mm; }
     .hero-row { display:flex; justify-content:space-between; align-items:baseline; gap:1mm; }
     .hero-name { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .hero-pct { min-width: 8mm; text-align:right; font-variant-numeric: tabular-nums; font-weight: 700; }
-    .lbl-footer { border-top: 0.7px solid #000; padding-top: 0.95mm; font-size: 3.95pt; display: flex; flex-direction: column; gap: 0.55mm; }
+    .lbl-footer { border-top: 0.7px solid #000; padding-top: 0.95mm; font-size: 4.55pt; display: flex; flex-direction: column; gap: 0.55mm; }
     .lbl-meta-grid { display:grid; grid-template-columns: 1fr 1fr; gap:0.4mm 1.2mm; }
     .lbl-col { display:flex; flex-direction:column; gap:0.3mm; }
     .lbl-row { display:grid; grid-template-columns:auto 1fr; align-items:baseline; column-gap:0.8mm; font-weight: 600; font-variant-numeric: tabular-nums; }
     .lbl-row span { white-space: nowrap; }
     .lbl-row b { font-weight: 700; margin-left: 0; text-align:right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .lbl-inci { font-size: 3.25pt; line-height: 1.28; color: #000; text-align: left; width: 100%; word-wrap: break-word; overflow-wrap: break-word; max-height: 16.6mm; overflow: hidden; font-weight: 400; }
+    .lbl-inci { font-size: 3.85pt; line-height: 1.25; color: #000; text-align: left; width: 100%; word-wrap: break-word; overflow-wrap: break-word; max-height: 14.8mm; overflow: hidden; font-weight: 400; }
 
     /* RECEIPT STYLE (Hidden on Screen, Visible on Print) */
     #receipt-area {
       display: none; /* Hidden by default */
-      width: 80mm; /* Standard receipt width */
+      width: var(--ql-roll-w);
       background: white;
-      padding: 5mm;
+      padding: 3mm;
       box-sizing: border-box;
       font-family: 'Courier New', monospace;
-      font-size: 10pt;
+      font-size: 8pt;
       border: 1px dashed #ccc;
     }
-    .rcp-header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px; }
-    .rcp-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
-    .rcp-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 9pt; }
+    .rcp-header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 7px; margin-bottom: 7px; color: #000; }
+    .rcp-row { display: flex; justify-content: space-between; gap: 2mm; margin-bottom: 3px; }
+    .rcp-row b, .rcp-row span { word-break: break-word; }
+    .rcp-table { width: 100%; border-collapse: collapse; margin-top: 7px; font-size: 7pt; table-layout: fixed; }
     .rcp-table th { text-align: left; border-bottom: 1px solid #000; }
-    .rcp-table td { padding: 4px 0; border-bottom: 1px dotted #ccc; }
-    .rcp-footer { margin-top: 15px; border-top: 1px dashed #000; padding-top: 10px; text-align: right; }
+    .rcp-table th:first-child, .rcp-table td:first-child { width: 52%; word-break: break-word; }
+    .rcp-table th:nth-child(2), .rcp-table td:nth-child(2) { width: 22%; }
+    .rcp-table th:nth-child(3), .rcp-table td:nth-child(3) { width: 26%; }
+    .rcp-table td { padding: 3px 0; border-bottom: 1px dotted #ccc; vertical-align: top; }
+    .rcp-footer { margin-top: 10px; border-top: 1px dashed #000; padding-top: 7px; text-align: right; }
 
     @media (max-width: 900px) {
       body { height:auto; min-height:100vh; overflow:auto; flex-direction:column; }
@@ -150,10 +158,13 @@
 
     /* PRINT SETTINGS */
     @media print { 
+      html, body { width: var(--ql-roll-w); height: auto; margin: 0; padding: 0; overflow: visible; background: white; }
       .config-panel { display: none; }
-      .preview-panel { display: block; background: white; padding: 0; overflow: visible; } 
+      .preview-panel { display: block; width: var(--ql-roll-w); background: white; padding: 0; overflow: visible; } 
       
       #label-area { 
+        width: var(--label-w);
+        height: var(--label-h);
         box-shadow: none; margin: 0; 
         transform: none;
         page-break-after: always; /* Force Label on Page 1 */
@@ -162,9 +173,10 @@
       
       #receipt-area { 
         display: block; /* Show Receipt */
-        width: 100%; 
+        width: var(--ql-roll-w); 
         border: none;
-        margin-top: 20px;
+        margin: 0;
+        page-break-after: auto;
       }
       
       @page { margin: 0; } 
@@ -310,7 +322,7 @@
       <div id="formulaWarning" class="warning-line"></div>
       <div id="submitStatus" class="submit-status"></div>
       <div id="reviewActions" style="display:none;">
-        <button class="btn-print" onclick="handlePrint()">Confirm & Print Label + Formula</button>
+        <button class="btn-print" onclick="handlePrint()">Confirm & Print 62mm Label + Production Sheet</button>
         <button class="btn-print" style="background:#334155; color:white;" onclick="newOrder()">New Order</button>
       </div>
     </div>
@@ -324,7 +336,7 @@
           <img class="lbl-logo" src="logo_unpun.png" alt="UNPUN logo" />
           <div class="lbl-brand">UNPUN<br><span style="font-size:4.6pt; font-weight:600; letter-spacing:0.5px;">INDUSTRY</span></div>
         </div>
-        <canvas id="qr" style="width:4.6mm; height:4.6mm;"></canvas>
+        <canvas id="qr" style="width:7mm; height:7mm;"></canvas>
       </div>
       <div class="lbl-title-box"><div class="lbl-title" id="lblTitle">PRODUCT NAME</div></div>
       <div class="lbl-featured-head">Featured Ingredients</div>
