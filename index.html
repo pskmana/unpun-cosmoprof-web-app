@@ -14,7 +14,7 @@
       --green-soft:#e6f4ef; --amber:#b9812f; --danger:#991b1b; --ok:#166534;
       --shadow: 0 18px 48px rgba(23,33,31,0.10);
       --label-w: 62mm;
-      --label-h: 65mm;
+      --label-h: 100mm;
       --ql-roll-w: 62mm;
       --print-red: #d71920;
     }
@@ -188,8 +188,8 @@
       }
       
       @page { margin: 0; } 
-      @page ql-label { size: 62mm 65mm; margin: 0; }
-      @page ql-sheet { size: 62mm 200mm; margin: 0; }
+      @page ql-label { size: 62mm 100mm; margin: 0; }
+      @page ql-sheet { size: 62mm 100mm; margin: 0; }
     }
   </style>
 </head>
@@ -332,7 +332,7 @@
       <div id="formulaWarning" class="warning-line"></div>
       <div id="submitStatus" class="submit-status"></div>
       <div id="reviewActions" style="display:none;">
-        <button class="btn-print label-only" onclick="handlePrintLabel()">Confirm & Print Label 62x65</button>
+        <button class="btn-print label-only" onclick="handlePrintLabel()">Confirm & Print Label 62mm</button>
         <button class="btn-print sheet-only" onclick="handlePrintSheet()">Print Production Sheet 62mm</button>
         <button class="btn-print secondary" onclick="newOrder()">New Order</button>
       </div>
