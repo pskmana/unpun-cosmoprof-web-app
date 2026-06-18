@@ -332,7 +332,7 @@
       <div id="formulaWarning" class="warning-line"></div>
       <div id="submitStatus" class="submit-status"></div>
       <div id="reviewActions" style="display:none;">
-        <button class="btn-print label-only" onclick="handlePrintLabel()">Confirm & Print Label 62mm</button>
+        <button class="btn-print label-only" onclick="handleBrotherExport()">Confirm & Export Brother CSV</button>
         <button class="btn-print sheet-only" onclick="handlePrintSheet()">Print Production Sheet 62mm</button>
         <button class="btn-print secondary" onclick="newOrder()">New Order</button>
       </div>
@@ -1139,12 +1139,75 @@ function newOrder() {
   changeFormula();
 }
 
-function handlePrintLabel() {
-  submitOrder({ printMode: "label" });
+function handleBrotherExport() {
+  submitOrder({ exportBrother: true });
 }
 
 function handlePrintSheet() {
   submitOrder({ printMode: "sheet" });
+}
+
+function csvCell(value) {
+  return `"${String(value ?? "").replace(/"/g, '""')}"`;
+}
+
+function safeFilePart(value) {
+  return String(value || "order").replace(/[^a-z0-9ก-๙_-]+/gi, "-").replace(/-+/g, "-").replace(/^-|-$/g, "").slice(0, 80);
+}
+
+function downloadTextFile(filename, text, type = "text/csv;charset=utf-8") {
+  const blob = new Blob(["\uFEFF" + text], { type });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(a.href);
+}
+
+function exportBrotherCSV(data) {
+  const heroItems = data.formulaItems
+    .filter(item => item.part === "C")
+    .sort((a, b) => Number(b.pct || 0) - Number(a.pct || 0))
+    .slice(0, 5);
+  const fallbackItems = data.formulaItems
+    .filter(item => item.part !== "E")
+    .sort((a, b) => Number(b.pct || 0) - Number(a.pct || 0))
+    .slice(0, 5);
+  const featured = (heroItems.length ? heroItems : fallbackItems)
+    .map(item => `${item.ingredient} ${item.pct}%`)
+    .join(" | ");
+  const ingredients = [...new Set(data.formulaItems.map(item => item.inci).filter(Boolean))].join(", ");
+  const headers = [
+    "PRODUCT_NAME",
+    "CUSTOMER_NAME",
+    "BATCH",
+    "CUSTOMER_CODE",
+    "NET_WEIGHT",
+    "COST_PER_KG",
+    "BATCH_COST",
+    "FEATURED_INGREDIENTS",
+    "INGREDIENTS",
+    "FORMULA_SUMMARY",
+    "QR_URL"
+  ];
+  const row = [
+    data.product,
+    data.customer,
+    data.batch,
+    data.customerCode,
+    `${data.netWeight} G`,
+    data.cost,
+    data.batchCost,
+    featured,
+    ingredients,
+    data.formula,
+    getCustomerLink()
+  ];
+  const csv = [headers.map(csvCell).join(","), row.map(csvCell).join(",")].join("\n");
+  downloadTextFile(`brother-label-${safeFilePart(data.batch)}-${safeFilePart(data.customerCode)}.csv`, csv);
+  setSubmitStatus("ส่งข้อมูลแล้ว และดาวน์โหลดไฟล์ Brother CSV แล้ว", "ok");
 }
 
 function printOutput(mode) {
@@ -1310,7 +1373,7 @@ async function processQueue({ force = false } = {}) {
   updateSyncStatusUI();
 }
 
-async function submitOrder({ printMode = "" } = {}) {
+async function submitOrder({ printMode = "", exportBrother = false } = {}) {
   if (isSubmitting) return;
   const submitBtns = Array.from(document.querySelectorAll('.btn-print'));
   const errors = validateBeforeSubmit();
@@ -1330,13 +1393,15 @@ async function submitOrder({ printMode = "" } = {}) {
   try {
     const payload = getOrderPayload();
     if (wasSent(payload.orderId)) {
-      setSubmitStatus("ออเดอร์นี้เคยส่งเข้า Sheet แล้ว กำลังเปิดหน้าพิมพ์", "warn");
+      setSubmitStatus("ออเดอร์นี้เคยส่งเข้า Sheet แล้ว กำลังเตรียมไฟล์/หน้าพิมพ์", "warn");
+      if (exportBrother) exportBrotherCSV(payload);
       if (printMode) printOutput(printMode);
       return;
     }
 
     saveOrderLocal(payload);
     await sendDataToSheet(payload);
+    if (exportBrother) exportBrotherCSV(payload);
     if (printMode) printOutput(printMode);
   } finally {
     isSubmitting = false;
