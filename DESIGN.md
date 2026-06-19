@@ -11,7 +11,8 @@ UNPUN Formula Studio supports a workshop flow where a customer scans a QR code, 
 - LINE OA is the public entry point and staff notification layer, not the only operational database.
 - Macbook Print Station is the local production handoff for Brother QL-800 label files and RD sheets.
 - Printed outputs: strict black-and-white production artifacts, optimized for label and RD formula sheet clarity.
-- Print media target: Brother QL-800 with 62 mm Black/Red adhesive roll. P-touch Editor detects the media as `62mm Black/Red`; the customer flow exports a compact Brother label PNG plus CSV/RD text files instead of relying on browser direct print, because CUPS/browser print can report Brother paper-size errors with this roll.
+- Bottle label target: portrait ratio `7:13`. The original 35 x 65 mm label scales to 62 x 115.14 mm when using the 62 mm Brother roll width.
+- Print media target: Brother QL-800 with 62 mm Black/Red adhesive roll. P-touch Editor detects the media as `62mm Black/Red`; the customer flow exports a portrait Brother label PNG plus CSV/RD text files instead of relying on browser direct print, because CUPS/browser print can report Brother paper-size errors with this roll.
 
 ## Visual Direction
 
