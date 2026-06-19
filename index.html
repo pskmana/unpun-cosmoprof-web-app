@@ -17,7 +17,7 @@
       --label-h: 115.14mm;
       --ql-roll-w: 62mm;
       --ql-page-h: 184mm;
-      --print-red: #d71920;
+      --print-ink: #000000;
     }
     body { font-family: 'Inter', 'Sarabun', sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; overflow: hidden; color: var(--ink); }
 
@@ -100,11 +100,11 @@
     
     /* LABEL STYLE */
     #label-area {
-      width: var(--label-w); height: var(--label-h); background: white; padding: 3mm; box-sizing: border-box;
+      width: var(--label-w); height: var(--label-h); background: white; padding: 3.2mm; box-sizing: border-box;
       position: relative; color: black; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-      display: grid; grid-template-rows: auto auto auto 1fr auto; overflow: hidden; margin-bottom: 220px;
+      display: grid; grid-template-rows: auto auto auto auto 1fr; overflow: hidden; margin-bottom: 220px;
       transform: scale(2.35); transform-origin: center top;
-      border: 0.7px solid #000;
+      border: 0.55px solid #000;
       font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
     }
     .crop-mark { position:absolute; width:2.2mm; height:2.2mm; pointer-events:none; display:none; }
@@ -112,24 +112,26 @@
     .crop-mark.tr { top:-1px; right:-1px; border-top:0.6px solid #000; border-right:0.6px solid #000; transform: translate(2.6mm,-2.6mm); }
     .crop-mark.bl { bottom:-1px; left:-1px; border-bottom:0.6px solid #000; border-left:0.6px solid #000; transform: translate(-2.6mm,2.6mm); }
     .crop-mark.br { bottom:-1px; right:-1px; border-bottom:0.6px solid #000; border-right:0.6px solid #000; transform: translate(2.6mm,2.6mm); }
-    .lbl-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 0.7px solid #000; padding-bottom: 1mm; margin-bottom: 1.1mm; min-height: 9.5mm; }
+    .lbl-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 0.55px solid #000; padding-bottom: 1.4mm; margin-bottom: 1.6mm; min-height: 10mm; }
     .lbl-brand-wrap { display:flex; align-items:center; gap:1mm; }
-    .lbl-logo { width: 6.2mm; height: 6.2mm; object-fit: contain; }
-    .lbl-brand { font-weight: 800; font-size: 7pt; line-height: 1.02; letter-spacing: 0.2px; }
-    .lbl-title-box { border: 0.8px solid var(--print-red); padding: 1.2mm 1mm; text-align: center; margin-bottom: 1.1mm; display:flex; align-items:center; justify-content:center; min-height: 11mm; }
-    .lbl-title { font-weight: 900; font-size: 8pt; line-height: 1.08; text-transform: uppercase; letter-spacing: 0.15px; word-wrap: break-word; }
-    .lbl-featured-head { font-size: 5.3pt; font-weight: 800; letter-spacing: 0.4px; text-transform: uppercase; margin-bottom: 0.9mm; color: var(--print-red); }
-    .lbl-hero { font-size: 5.1pt; font-weight: 600; line-height: 1.34; display:flex; flex-direction:column; gap:0.45mm; margin-bottom: 0.8mm; }
+    .lbl-logo { width: 7.2mm; height: 7.2mm; object-fit: contain; }
+    .lbl-brand { font-weight: 900; font-size: 8.4pt; line-height: 1.02; letter-spacing: 0.15px; }
+    .lbl-brand span { font-size: 5.7pt !important; font-weight: 700 !important; letter-spacing: 0.45px !important; }
+    #qr { width: 8.3mm !important; height: 8.3mm !important; }
+    .lbl-title-box { border: 0.65px solid var(--print-ink); padding: 2.5mm 1mm; text-align: center; margin-bottom: 1.7mm; display:flex; align-items:center; justify-content:center; min-height: 14.5mm; }
+    .lbl-title { font-weight: 900; font-size: 11.2pt; line-height: 1.04; text-transform: uppercase; letter-spacing: 0; word-wrap: break-word; }
+    .lbl-featured-head { font-size: 7.2pt; font-weight: 900; letter-spacing: 0.2px; text-transform: uppercase; margin-bottom: 1mm; color: var(--print-ink); }
+    .lbl-hero { font-size: 7.1pt; font-weight: 750; line-height: 1.35; display:flex; flex-direction:column; gap:0.55mm; margin-bottom: 1.2mm; }
     .hero-row { display:flex; justify-content:space-between; align-items:baseline; gap:1mm; }
     .hero-name { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .hero-pct { min-width: 8mm; text-align:right; font-variant-numeric: tabular-nums; font-weight: 700; }
-    .lbl-footer { border-top: 0.7px solid #000; padding-top: 0.95mm; font-size: 4.55pt; display: flex; flex-direction: column; gap: 0.55mm; }
-    .lbl-meta-grid { display:grid; grid-template-columns: 1fr 1fr; gap:0.4mm 1.2mm; }
-    .lbl-col { display:flex; flex-direction:column; gap:0.3mm; }
-    .lbl-row { display:grid; grid-template-columns:auto 1fr; align-items:baseline; column-gap:0.8mm; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .hero-pct { min-width: 9mm; text-align:right; font-variant-numeric: tabular-nums; font-weight: 850; }
+    .lbl-footer { border-top: 0.55px solid #000; padding-top: 1mm; font-size: 6.3pt; display: flex; flex-direction: column; gap: 0.7mm; align-self:end; }
+    .lbl-meta-grid { display:grid; grid-template-columns: 1.15fr 0.85fr; gap:0.45mm 1.4mm; }
+    .lbl-col { display:flex; flex-direction:column; gap:0.45mm; }
+    .lbl-row { display:grid; grid-template-columns:auto 1fr; align-items:baseline; column-gap:0.9mm; font-weight: 700; font-variant-numeric: tabular-nums; }
     .lbl-row span { white-space: nowrap; }
-    .lbl-row b { font-weight: 700; margin-left: 0; text-align:right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .lbl-inci { font-size: 3.85pt; line-height: 1.25; color: #000; text-align: left; width: 100%; word-wrap: break-word; overflow-wrap: break-word; max-height: 14.8mm; overflow: hidden; font-weight: 400; }
+    .lbl-row b { font-weight: 850; margin-left: 0; text-align:right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .lbl-inci { font-size: 5.5pt; line-height: 1.22; color: #000; text-align: left; width: 100%; word-wrap: break-word; overflow-wrap: break-word; max-height: 18mm; overflow: hidden; font-weight: 500; }
 
     /* RECEIPT STYLE (Hidden on Screen, Visible on Print) */
     #receipt-area {
@@ -361,7 +363,7 @@
           </div>
           <div class="lbl-col">
             <div class="lbl-row"><span>NET:</span><b id="lblNet">50 G</b></div>
-            <div class="lbl-row"><span>COST:</span><b id="lblCostSmall">0</b></div>
+            <div class="lbl-row"><span>CODE:</span><b id="lblCustomerCodeSmall">CUS</b></div>
           </div>
         </div>
         <div class="lbl-inci" id="lblInci"></div>
@@ -996,7 +998,7 @@ function updateSystem() {
 
   // 6. UI Update
   document.getElementById('txtCost').innerText = Math.ceil(cost).toLocaleString();
-  document.getElementById('lblCostSmall').innerText = Math.ceil(cost).toLocaleString();
+  document.getElementById('lblCustomerCodeSmall').innerText = customerCode;
   document.getElementById('lblDev').innerText = `${custName} ${custLastName}`.trim() || "Unpun";
   document.getElementById('lblBatch').innerText = batchNo;
   document.getElementById('lblNet').innerText = `${netWeight.toLocaleString()} G`;
@@ -1013,9 +1015,9 @@ function updateSystem() {
   let tStr = `${benefitName} ${formulaName}`.trim().toUpperCase();
   document.getElementById('lblTitle').innerText = tStr;
 
-  // Max 5 Hero
-  let heroes = bom.filter(x => x.p==='C').sort((a,b)=>b.val - a.val).slice(0,5);
-  if (!heroes.length) heroes = bom.filter(x => x.p !== 'E').sort((a,b)=>b.val - a.val).slice(0,5);
+  // Keep label readable at 62 x 115.14mm.
+  let heroes = bom.filter(x => x.p==='C').sort((a,b)=>b.val - a.val).slice(0,3);
+  if (!heroes.length) heroes = bom.filter(x => x.p !== 'E').sort((a,b)=>b.val - a.val).slice(0,3);
   document.getElementById('lblHero').innerHTML = heroes.map(h =>
     `<div class="hero-row"><span class="hero-name">• ${h.n}</span><span class="hero-pct">${h.val.toFixed(2)}%</span></div>`
   ).join("");
@@ -1191,84 +1193,137 @@ function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight, maxLines = 3) {
     }
   });
   if (line) lines.push(line);
-  lines.slice(0, maxLines).forEach((drawLine, index) => {
+  const drawnLines = lines.slice(0, maxLines);
+  drawnLines.forEach((drawLine, index) => {
     const finalLine = index === maxLines - 1 && lines.length > maxLines ? `${drawLine.replace(/\.*$/, "")}...` : drawLine;
     ctx.fillText(finalLine, x, y + index * lineHeight);
   });
+  return drawnLines.length;
+}
+
+function drawCanvasRule(ctx, x1, y, x2) {
+  ctx.beginPath();
+  ctx.moveTo(x1, y);
+  ctx.lineTo(x2, y);
+  ctx.stroke();
+}
+
+function fitCanvasText(ctx, text, maxWidth) {
+  const source = String(text || "");
+  if (ctx.measureText(source).width <= maxWidth) return source;
+  let fitted = source;
+  while (fitted.length > 1 && ctx.measureText(`${fitted}...`).width > maxWidth) {
+    fitted = fitted.slice(0, -1);
+  }
+  return `${fitted}...`;
 }
 
 function exportBrotherLabelPNG(data) {
   const pxPerMm = 12;
+  const outputScale = 2;
   const labelWidthMm = 62;
   const labelHeightMm = labelWidthMm * 13 / 7;
   const width = Math.round(labelWidthMm * pxPerMm);
   const height = Math.round(labelHeightMm * pxPerMm);
-  const pad = 34;
+  const pad = 40;
   const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
+  canvas.width = width * outputScale;
+  canvas.height = height * outputScale;
   const ctx = canvas.getContext("2d");
+  ctx.scale(outputScale, outputScale);
+  ctx.imageSmoothingEnabled = false;
+  const contentW = width - pad * 2;
+  const centerX = width / 2;
+
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, width, height);
   ctx.strokeStyle = "#111111";
-  ctx.lineWidth = 5;
-  ctx.strokeRect(10, 10, width - 20, height - 20);
+  ctx.lineWidth = 2.5;
+  ctx.strokeRect(8, 8, width - 16, height - 16);
 
-  ctx.fillStyle = "#d71920";
-  ctx.fillRect(0, 0, width, 78);
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "800 32px Arial";
-  ctx.fillText("UNPUN INDUSTRY", pad, 50);
+  const logo = document.querySelector(".lbl-logo");
+  if (logo && logo.complete) {
+    ctx.drawImage(logo, pad + 20, 66, 78, 78);
+  }
+  ctx.textAlign = "left";
+  ctx.fillStyle = "#000000";
+  ctx.font = "900 39px Arial";
+  ctx.fillText("UNPUN", pad + 120, 96);
+  ctx.font = "800 29px Arial";
+  ctx.fillText("INDUSTRY", pad + 120, 136);
 
-  ctx.fillStyle = "#111111";
-  ctx.font = "900 42px Arial";
-  wrapCanvasText(ctx, data.product, pad, 145, width - pad * 2, 48, 3);
+  const qrCanvas = document.getElementById("qr");
+  if (qrCanvas) {
+    ctx.drawImage(qrCanvas, width - pad - 98, 56, 92, 92);
+  }
 
   ctx.strokeStyle = "#111111";
   ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(pad, 300);
-  ctx.lineTo(width - pad, 300);
-  ctx.stroke();
+  drawCanvasRule(ctx, pad, 182, width - pad);
 
-  ctx.font = "700 25px Arial";
-  ctx.fillText(`Customer: ${data.customer || "-"}`, pad, 350);
-  ctx.fillText(`Batch: ${data.batch || "-"}`, pad, 392);
-  ctx.fillText(`Net: ${data.netWeight || 100}g`, pad, 434);
-  ctx.fillText(`Cost: ${data.batchCost || "-"} THB`, pad, 476);
+  const titleTop = 204;
+  const titleH = 150;
+  ctx.strokeRect(pad, titleTop, contentW, titleH);
+  ctx.textAlign = "center";
+  ctx.font = "900 42px Arial";
+  wrapCanvasText(ctx, data.product, centerX, titleTop + 88, contentW - 54, 46, 2);
 
   const heroItems = data.formulaItems
     .filter(item => item.part === "C")
     .sort((a, b) => Number(b.pct || 0) - Number(a.pct || 0))
-    .slice(0, 5);
+    .slice(0, 3);
   const fallbackItems = data.formulaItems
     .filter(item => item.part !== "E")
     .sort((a, b) => Number(b.pct || 0) - Number(a.pct || 0))
-    .slice(0, 5);
-  const featured = (heroItems.length ? heroItems : fallbackItems)
-    .map(item => `${item.ingredient} ${item.pct}%`)
-    .join(" | ");
+    .slice(0, 3);
+  const featuredItems = heroItems.length ? heroItems : fallbackItems;
 
-  ctx.fillStyle = "#d71920";
-  ctx.font = "800 22px Arial";
-  ctx.fillText("FEATURED INGREDIENTS", pad, 560);
+  ctx.textAlign = "left";
+  ctx.font = "900 34px Arial";
+  ctx.fillText("FEATURED INGREDIENTS", pad, 408);
+
+  let rowY = 462;
+  featuredItems.forEach(item => {
+    ctx.font = "900 34px Arial";
+    ctx.fillText(`• ${item.ingredient}`, pad, rowY);
+    ctx.textAlign = "right";
+    ctx.font = "900 34px Arial";
+    ctx.fillText(`${Number(item.pct || 0).toFixed(2)}%`, width - pad, rowY);
+    ctx.textAlign = "left";
+    rowY += 48;
+  });
+
+  const footerTop = height - 328;
+  ctx.strokeStyle = "#111111";
+  ctx.lineWidth = 2;
+  drawCanvasRule(ctx, pad, footerTop, width - pad);
+
+  ctx.textAlign = "left";
   ctx.fillStyle = "#111111";
-  ctx.font = "600 24px Arial";
-  wrapCanvasText(ctx, featured, pad, 600, width - pad * 2, 34, 5);
+  ctx.font = "900 30px Arial";
+  ctx.fillText("BATCH:", pad, footerTop + 42);
+  ctx.fillText(fitCanvasText(ctx, data.batch || "-", centerX - pad - 130), pad + 130, footerTop + 42);
+  ctx.fillText("NET:", centerX + 32, footerTop + 42);
+  ctx.textAlign = "right";
+  ctx.fillText(`${data.netWeight || 100} G`, width - pad, footerTop + 42);
+
+  ctx.textAlign = "left";
+  ctx.font = "900 29px Arial";
+  ctx.fillText("DEV:", pad, footerTop + 82);
+  ctx.fillText(fitCanvasText(ctx, data.customer || "-", centerX - pad - 92), pad + 92, footerTop + 82);
+  ctx.fillText("COST:", centerX + 32, footerTop + 82);
+  ctx.textAlign = "right";
+  ctx.fillText(`${data.batchCost || "-"} THB`, width - pad, footerTop + 82);
+
+  ctx.textAlign = "left";
+  ctx.font = "900 27px Arial";
+  ctx.fillText("CODE:", pad, footerTop + 122);
+  ctx.fillText(fitCanvasText(ctx, data.customerCode || "-", width - pad - (pad + 110)), pad + 110, footerTop + 122);
 
   const ingredients = [...new Set(data.formulaItems.map(item => item.inci).filter(Boolean))].join(", ");
-  ctx.font = "500 18px Arial";
-  wrapCanvasText(ctx, `INGREDIENTS: ${ingredients}`, pad, 820, width - pad * 2, 25, 7);
-
-  ctx.beginPath();
-  ctx.moveTo(pad, height - 105);
-  ctx.lineTo(width - pad, height - 105);
-  ctx.stroke();
-
-  ctx.font = "700 19px Arial";
-  ctx.fillText(data.customerCode || "", pad, height - 58);
-  ctx.font = "600 17px Arial";
-  ctx.fillText("Custom body oil crafted in workshop", pad, height - 30);
+  ctx.textAlign = "left";
+  ctx.font = "700 29px Arial";
+  wrapCanvasText(ctx, `INGREDIENTS: ${ingredients}.`, pad, footerTop + 166, contentW, 36, 5);
   canvas.toBlob(blob => {
     if (blob) downloadBlob(`brother-label-${safeFilePart(data.batch)}-${safeFilePart(data.customerCode)}.png`, blob);
   }, "image/png");
