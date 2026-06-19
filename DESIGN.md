@@ -2,12 +2,14 @@
 
 ## Product Use Case
 
-UNPUN Formula Studio supports a workshop flow where a customer scans a QR code, enters basic contact information, selects a body oil direction as a guide, builds a full 100% formula from all ingredient groups, confirms consent, and receives a printed bottle label. The same order data is sent to the RD team for production through the connected sheet workflow.
+UNPUN Formula Studio supports a workshop flow where a customer scans a QR code, adds the LINE OA, opens the customer web app from LINE, enters basic contact information, selects a body oil direction as a guide, builds a full 100% formula from all ingredient groups, confirms consent, and receives a finished bottle. The same order data is sent to the public backend, stored in the connected sheet workflow, and picked up by the Macbook Print Station for label and RD sheet generation.
 
 ## Experience Model
 
 - Single customer-facing page: premium, calm, mobile-friendly, and non-technical.
 - Operational review happens in the synced spreadsheet, not in a separate web admin page.
+- LINE OA is the public entry point and staff notification layer, not the only operational database.
+- Macbook Print Station is the local production handoff for Brother QL-800 label files and RD sheets.
 - Printed outputs: strict black-and-white production artifacts, optimized for label and RD formula sheet clarity.
 - Print media target: Brother QL-800 with 62 mm Black/Red adhesive roll. P-touch Editor detects the media as `62mm Black/Red`; the customer flow exports a compact Brother label PNG plus CSV/RD text files instead of relying on browser direct print, because CUPS/browser print can report Brother paper-size errors with this roll.
 
@@ -42,9 +44,21 @@ UNPUN Formula Studio supports a workshop flow where a customer scans a QR code, 
   - Left side: guided steps and order controls.
   - Right side: live label preview.
   - Bottom action area: estimated cost and confirm action.
+- Success page:
+  - Confirms the order was received.
+  - Avoids technical sync or print details.
+  - Sets expectation that staff will prepare the bottle.
+- Macbook Print Station:
+  - Shows a compact queue of new orders.
+  - Generates label artwork and RD production sheets.
+  - Exposes print/download actions only to staff on the connected Macbook.
 - RD / owner review:
   - Use the synced spreadsheet for order status, cost review, and production tracking.
   - Keep private operational controls out of the customer web page.
+
+## Workflow Source
+
+- See `FLOW.md` for the current end-to-end workshop workflow and status model.
 
 ## Tone
 
