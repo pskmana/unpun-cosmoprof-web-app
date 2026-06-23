@@ -239,7 +239,7 @@ function handleLineWebhook(payload) {
     .map(event => event && event.source)
     .filter(Boolean);
   const adminTarget = sources
-    .map(source => source.groupId || source.roomId || "")
+    .map(source => source.groupId || source.roomId || source.userId || "")
     .find(Boolean);
   if (adminTarget) props.setProperty("LINE_ADMIN_TO_ID", adminTarget);
 
