@@ -44,11 +44,19 @@ function doGet() {
 }
 
 function doPost(e) {
+  let payload;
+  try {
+    payload = parsePayload(e);
+    // ponytail: LINE only needs a fast acknowledgement; keep its path out of sheet locking.
+    if (Array.isArray(payload.events)) return handleLineWebhook(payload);
+  } catch (err) {
+    return jsonResponse({ ok: false, error: String(err) });
+  }
+
   const lock = LockService.getScriptLock();
   lock.waitLock(15000);
 
   try {
-    const payload = parsePayload(e);
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     const ordersSheet = getOrCreateSheet(ss, "Orders", ORDER_HEADERS);
     const itemsSheet = getOrCreateSheet(ss, "Items", ITEM_HEADERS);
@@ -170,8 +178,11 @@ function normalizeItemRows(payload, orderRow) {
 function notifyLineOa(payload, order, items) {
   const props = PropertiesService.getScriptProperties();
   const token = props.getProperty("LINE_CHANNEL_ACCESS_TOKEN");
-  const recipient = props.getProperty("LINE_STAFF_USER_ID");
-  if (!token || !recipient) return false;
+  const recipients = [
+    props.getProperty("LINE_ADMIN_TO_ID"),
+    props.getProperty("LINE_STAFF_USER_ID")
+  ].filter(Boolean).filter((id, index, list) => list.indexOf(id) === index);
+  if (!token || !recipients.length) return false;
 
   const labelUrl = saveLabelImage(payload.labelPng, order.orderId);
   const formula = items.map(item => `${item.part}. ${item.ingredient} ${item.pct}%`).join("\n");
@@ -195,18 +206,48 @@ function notifyLineOa(payload, order, items) {
     });
   }
 
-  const response = UrlFetchApp.fetch("https://api.line.me/v2/bot/message/push", {
+  return recipients.map(recipient => pushLine(token, recipient, messages, text)).some(Boolean);
+}
+
+function pushLine(token, recipient, messages, fallbackText) {
+  let response = UrlFetchApp.fetch("https://api.line.me/v2/bot/message/push", {
     method: "post",
     contentType: "application/json",
     headers: { Authorization: `Bearer ${token}` },
     payload: JSON.stringify({ to: recipient, messages }),
     muteHttpExceptions: true
   });
+  if (response.getResponseCode() >= 300 && messages.length > 1) {
+    response = UrlFetchApp.fetch("https://api.line.me/v2/bot/message/push", {
+      method: "post",
+      contentType: "application/json",
+      headers: { Authorization: `Bearer ${token}` },
+      payload: JSON.stringify({ to: recipient, messages: [{ type: "text", text: fallbackText }] }),
+      muteHttpExceptions: true
+    });
+  }
   if (response.getResponseCode() >= 300) {
-    console.warn(`LINE push failed: ${response.getResponseCode()} ${response.getContentText()}`);
+    console.warn(`LINE push failed for ${recipient}: ${response.getResponseCode()} ${response.getContentText()}`);
     return false;
   }
   return true;
+}
+
+function handleLineWebhook(payload) {
+  const props = PropertiesService.getScriptProperties();
+  const sources = payload.events
+    .map(event => event && event.source)
+    .filter(Boolean);
+  const adminTarget = sources
+    .map(source => source.groupId || source.roomId || "")
+    .find(Boolean);
+  if (adminTarget) props.setProperty("LINE_ADMIN_TO_ID", adminTarget);
+
+  return jsonResponse({
+    ok: true,
+    lineWebhook: true,
+    adminTargetSaved: Boolean(adminTarget)
+  });
 }
 
 function saveLabelImage(dataUrl, orderId) {
