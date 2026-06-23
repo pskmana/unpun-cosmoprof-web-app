@@ -1417,6 +1417,15 @@ function isAppsScriptUrl(url) {
 async function postToTarget(target, envelope) {
   const body = JSON.stringify(envelope);
   if (isAppsScriptUrl(target.url)) {
+    // Apps Script redirects POST responses to a Google content URL. sendBeacon
+    // sends the order without exposing that redirect as a browser-side failure.
+    if (navigator.sendBeacon) {
+      const accepted = navigator.sendBeacon(
+        target.url,
+        new Blob([body], { type: "text/plain;charset=utf-8" })
+      );
+      if (accepted) return { target: target.name, ok: true, queued: true };
+    }
     await fetchWithTimeout(target.url, {
       method: "POST",
       mode: "no-cors",
