@@ -54,23 +54,25 @@ function doPost(e) {
     const itemsSheet = getOrCreateSheet(ss, "Items", ITEM_HEADERS);
 
     const orderRow = normalizeOrderRow(payload);
-    if (hasExistingOrder(ordersSheet, orderRow.orderId)) {
-      return jsonResponse({ ok: true, duplicate: true, orderId: orderRow.orderId });
-    }
-
-    ordersSheet.appendRow(ORDER_HEADERS.map(header => orderRow[header] ?? ""));
-
+    const duplicate = hasExistingOrder(ordersSheet, orderRow.orderId);
     const itemRows = normalizeItemRows(payload, orderRow);
-    if (itemRows.length) {
-      itemsSheet
-        .getRange(itemsSheet.getLastRow() + 1, 1, itemRows.length, ITEM_HEADERS.length)
-        .setValues(itemRows.map(row => ITEM_HEADERS.map(header => row[header] ?? "")));
+    if (!duplicate) {
+      ordersSheet.appendRow(ORDER_HEADERS.map(header => orderRow[header] ?? ""));
+      if (itemRows.length) {
+        itemsSheet
+          .getRange(itemsSheet.getLastRow() + 1, 1, itemRows.length, ITEM_HEADERS.length)
+          .setValues(itemRows.map(row => ITEM_HEADERS.map(header => row[header] ?? "")));
+      }
     }
+
+    const lineNotified = notifyLineOa(payload, orderRow, itemRows);
 
     return jsonResponse({
       ok: true,
+      duplicate,
       orderId: orderRow.orderId,
-      itemCount: itemRows.length
+      itemCount: itemRows.length,
+      lineNotified
     });
   } catch (err) {
     return jsonResponse({
@@ -163,6 +165,59 @@ function normalizeItemRows(payload, orderRow) {
     costPerKg: item.costPerKg || "",
     grams: item.pct && orderRow.netWeight ? Number((item.pct * orderRow.netWeight / 100).toFixed(3)) : ""
   }));
+}
+
+function notifyLineOa(payload, order, items) {
+  const props = PropertiesService.getScriptProperties();
+  const token = props.getProperty("LINE_CHANNEL_ACCESS_TOKEN");
+  const recipient = props.getProperty("LINE_STAFF_USER_ID");
+  if (!token || !recipient) return false;
+
+  const labelUrl = saveLabelImage(payload.labelPng, order.orderId);
+  const formula = items.map(item => `${item.part}. ${item.ingredient} ${item.pct}%`).join("\n");
+  const text = [
+    "NEW WORKSHOP ORDER",
+    `Order: ${order.orderId}`,
+    `Batch: ${order.batch}`,
+    `Customer: ${order.customerName}`,
+    `Product: ${order.product}`,
+    `Net: ${order.netWeight} g | Cost/kg: ${order.costPerKg} THB`,
+    "",
+    "FORMULA",
+    formula
+  ].join("\n").slice(0, 4900);
+  const messages = [{ type: "text", text }];
+  if (labelUrl) {
+    messages.unshift({
+      type: "image",
+      originalContentUrl: labelUrl,
+      previewImageUrl: labelUrl
+    });
+  }
+
+  const response = UrlFetchApp.fetch("https://api.line.me/v2/bot/message/push", {
+    method: "post",
+    contentType: "application/json",
+    headers: { Authorization: `Bearer ${token}` },
+    payload: JSON.stringify({ to: recipient, messages }),
+    muteHttpExceptions: true
+  });
+  if (response.getResponseCode() >= 300) {
+    console.warn(`LINE push failed: ${response.getResponseCode()} ${response.getContentText()}`);
+    return false;
+  }
+  return true;
+}
+
+function saveLabelImage(dataUrl, orderId) {
+  const match = String(dataUrl || "").match(/^data:image\/png;base64,(.+)$/);
+  if (!match) return "";
+  const props = PropertiesService.getScriptProperties();
+  const folderId = props.getProperty("LINE_LABEL_FOLDER_ID");
+  const folder = folderId ? DriveApp.getFolderById(folderId) : DriveApp.getRootFolder();
+  const file = folder.createFile(Utilities.newBlob(Utilities.base64Decode(match[1]), "image/png", `${orderId}.png`));
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  return `https://drive.google.com/uc?export=view&id=${file.getId()}`;
 }
 
 function jsonResponse(data) {

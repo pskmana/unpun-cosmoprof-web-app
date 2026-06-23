@@ -300,16 +300,6 @@
            <button class="mini-btn" onclick="qsPart('D')">Fill to Guide</button>
         </div>
         <div class="selection-list" id="list-D"></div>
-      </div>
-
-      <div class="form-group" data-step="2">
-        <label class="form-label"><span>Antioxidant (E)</span><span id="status-E" class="status-bar">Guide: 0%</span></label>
-        <input type="search" id="search-E" class="form-input" placeholder="Search antioxidant..." oninput="filterList('E')" />
-        <div class="mini-actions">
-           <button class="mini-btn secondary" onclick="clearPart('E')">Clear</button>
-           <button class="mini-btn" onclick="qsPart('E')">Fill to Guide</button>
-        </div>
-        <div class="selection-list" id="list-E"></div>
         <div class="step-actions">
           <button class="mini-btn secondary" onclick="setStep(1)">Back: Customer</button>
           <button class="mini-btn" onclick="goToStep3()">Next: Review</button>
@@ -339,8 +329,7 @@
       <div id="formulaWarning" class="warning-line"></div>
       <div id="submitStatus" class="submit-status"></div>
       <div id="reviewActions" style="display:none;">
-        <button class="btn-print label-only" onclick="handleBrotherExport()">Confirm & Download Brother Label</button>
-        <button class="btn-print sheet-only" onclick="handlePrintSheet()">Download RD Production Sheet</button>
+        <button class="btn-print label-only" onclick="handleSendToLineOa()">Send Order to LINE OA</button>
         <button class="btn-print secondary" onclick="newOrder()">New Order</button>
       </div>
     </div>
@@ -418,19 +407,18 @@ const TARGET_SHEET_URL = "";
 const TARGET_SHEET_ID = "";
 
 const POOLS = {
-  "DEW": { name: "Dew Oil", desc: "Light & Glow", ratios: { A:84.5, B:9.0, C:4.5, D:1.5, E:0.5 } },
-  "PARFUME": { name: "Perfume Oil", desc: "Scent Focus", ratios: { A:84.0, B:8.0, C:2.5, D:5.0, E:0.5 } },
-  "DRY": { name: "Dry Oil", desc: "Quick Absorb", ratios: { A:78.2, B:17.0, C:3.4, D:1.0, E:0.4 } },
-  "SLEEP": { name: "Sleep Oil", desc: "Therapy", ratios: { A:88.5, B:6.5, C:3.6, D:0.8, E:0.6 } }
+  "DEW": { name: "Dew Oil", desc: "Light & Glow", ratios: { A:84.5, B:9.0, C:5.0, D:1.5 } },
+  "PARFUME": { name: "Perfume Oil", desc: "Scent Focus", ratios: { A:84.0, B:8.0, C:3.0, D:5.0 } },
+  "DRY": { name: "Dry Oil", desc: "Quick Absorb", ratios: { A:78.2, B:17.0, C:3.8, D:1.0 } },
+  "SLEEP": { name: "Sleep Oil", desc: "Therapy", ratios: { A:88.5, B:6.5, C:4.2, D:0.8 } }
 };
 
-const FORMULA_PARTS = ["A", "B", "C", "D", "E"];
+const FORMULA_PARTS = ["A", "B", "C", "D"];
 const PART_LABELS = {
   A: "Base Oil",
   B: "Texture / Emollient",
   C: "Active Oils",
-  D: "Fragrance",
-  E: "Antioxidant"
+  D: "Fragrance"
 };
 
 // MASTER DB
@@ -453,6 +441,7 @@ const MASTER_DB = [
   {p:"C", code:"NAT-006", grp:"Natural Active Oils", n:"Avocado Oil", i:"Persea Gratissima Oil", c:855.00, k:"DEEP REPAIR"},
   {p:"C", code:"NAT-007", grp:"Natural Active Oils", n:"Coconut Oil", i:"Cocos Nucifera Oil", c:180.00, k:"SILKY GLOW"},
   {p:"C", code:"NAT-008", grp:"Natural Active Oils", n:"Rosehip Oil", i:"Rosa Canina Fruit Oil", c:1544.00, k:"AGE DEFENSE"},
+  {p:"C", code:"ACT-001", grp:"Natural Active Oils", n:"Vitamin E", i:"Tocopheryl Acetate", c:1357.00, k:"ANTIOXIDANT"},
 
   // D customer-selectable fragrances from DB น้ำหอม
   {p:"D", code:"PF-FLO-01", supplierCode:"PP26-008864", grp:"Floral", n:"Soft Peony Bloom", i:"Parfum (Soft Peony Bloom)", c:1162.02},
@@ -471,8 +460,7 @@ const MASTER_DB = [
   {p:"D", code:"PF-ARO-04", supplierCode:"PP26-008903", grp:"Aromatic", n:"Calm Tea Aromatic", i:"Parfum (Calm Tea Aromatic)", c:1094.61},
   {p:"D", code:"PF-GSW-01", supplierCode:"PP26-008904", grp:"Gourmand Sweet", n:"Warm Vanilla Cloud", i:"Parfum (Warm Vanilla Cloud)", c:1162.02},
   {p:"D", code:"PF-GSW-02", supplierCode:"PP26-008905", grp:"Gourmand Sweet", n:"Sweet Bakery Cream", i:"Parfum (Sweet Bakery Cream)", c:1147.58},
-  {p:"D", code:"PF-GSW-03", supplierCode:"PP26-008906", grp:"Gourmand Sweet", n:"Thai Sweet Dessert", i:"Parfum (Thai Sweet Dessert)", c:1131.53},
-  {p:"E", n:"BHT", i:"BHT", c:375}, {p:"E", n:"Vit E", i:"Tocopheryl Acetate", c:1357}
+  {p:"D", code:"PF-GSW-03", supplierCode:"PP26-008906", grp:"Gourmand Sweet", n:"Thai Sweet Dessert", i:"Parfum (Thai Sweet Dessert)", c:1131.53}
 ];
 
 // STATE
@@ -744,6 +732,7 @@ function buildDatabasePayload(data) {
     schemaVersion: data.schemaVersion,
     source: "UNPUN Formula Studio",
     submittedAt,
+    labelPng: data.labelPng || "",
     syncTarget: {
       sheetId: data.targetSheetId,
       sheetUrl: data.targetSheetUrl
@@ -1184,12 +1173,8 @@ function newOrder() {
   changeFormula();
 }
 
-function handleBrotherExport() {
-  submitOrder({ exportBrother: true });
-}
-
-function handlePrintSheet() {
-  submitOrder({ exportSheet: true });
+function handleSendToLineOa() {
+  submitOrder();
 }
 
 function csvCell(value) {
@@ -1485,31 +1470,14 @@ async function sendDataToSheet(data) {
   return { ok: true, queued: false };
 }
 
-function formatLineOrderMessage(data) {
-  const formula = data.formulaItems
-    .map(item => `${item.part}. ${item.ingredient} ${item.pct}%`)
-    .join("\n");
-  return [
-    "NEW WORKSHOP ORDER",
-    `Order: ${data.orderId}`,
-    `Batch: ${data.batch}`,
-    `Customer: ${data.customer}`,
-    `Product: ${data.product}`,
-    `Net: ${data.netWeight} g | Cost/kg: ${data.cost} THB`,
-    "",
-    "FORMULA",
-    formula
-  ].join("\n").slice(0, 4900);
-}
-
-async function sendOrderToLineOa(data) {
-  if (!LINE_LIFF_ID || !window.liff || !liff.isInClient()) return false;
+async function attachLineLabelImage(data) {
   try {
-    await liff.sendMessages([{ type: "text", text: formatLineOrderMessage(data) }]);
-    return true;
+    const label = document.getElementById("label-area");
+    if (!label) return;
+    const canvas = await renderLabelPreviewCanvas(label, 4);
+    data.labelPng = canvas.toDataURL("image/png");
   } catch (err) {
-    console.warn("Could not send order to LINE OA", err);
-    return false;
+    console.warn("Could not create LINE label image", err);
   }
 }
 
@@ -1595,22 +1563,14 @@ async function submitOrder({ printMode = "", exportBrother = false, exportSheet 
 
   try {
     const payload = getOrderPayload();
-    if (wasSent(payload.orderId)) {
-      setSubmitStatus("ออเดอร์นี้เคยส่งเข้า Sheet แล้ว กำลังเตรียมไฟล์", "warn");
-      if (exportBrother) await exportBrotherLabelOnly(payload);
-      if (exportSheet) exportProductionSheetTXT(payload);
-      if (printMode) printOutput(printMode);
-      return;
-    }
-
-    saveOrderLocal(payload);
+    if (!wasSent(payload.orderId)) saveOrderLocal(payload);
+    await attachLineLabelImage(payload);
     if (exportBrother) await exportBrotherLabelOnly(payload);
     if (exportSheet) exportProductionSheetTXT(payload);
     if (printMode) printOutput(printMode);
     const sync = await sendDataToSheet(payload);
     if (sync.ok) {
-      const sentToLine = await sendOrderToLineOa(payload);
-      if (sentToLine) setSubmitStatus("ส่งสูตรเข้า Sheet และ LINE OA แล้ว", "ok");
+      setSubmitStatus("ส่งสูตรเข้า Sheet และ LINE OA แล้ว", "ok");
     }
   } finally {
     isSubmitting = false;
