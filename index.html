@@ -1485,6 +1485,34 @@ async function sendDataToSheet(data) {
   return { ok: true, queued: false };
 }
 
+function formatLineOrderMessage(data) {
+  const formula = data.formulaItems
+    .map(item => `${item.part}. ${item.ingredient} ${item.pct}%`)
+    .join("\n");
+  return [
+    "NEW WORKSHOP ORDER",
+    `Order: ${data.orderId}`,
+    `Batch: ${data.batch}`,
+    `Customer: ${data.customer}`,
+    `Product: ${data.product}`,
+    `Net: ${data.netWeight} g | Cost/kg: ${data.cost} THB`,
+    "",
+    "FORMULA",
+    formula
+  ].join("\n").slice(0, 4900);
+}
+
+async function sendOrderToLineOa(data) {
+  if (!LINE_LIFF_ID || !window.liff || !liff.isInClient()) return false;
+  try {
+    await liff.sendMessages([{ type: "text", text: formatLineOrderMessage(data) }]);
+    return true;
+  } catch (err) {
+    console.warn("Could not send order to LINE OA", err);
+    return false;
+  }
+}
+
 async function retrySyncNow() {
   await processQueue({ force: true });
 }
@@ -1579,7 +1607,11 @@ async function submitOrder({ printMode = "", exportBrother = false, exportSheet 
     if (exportBrother) await exportBrotherLabelOnly(payload);
     if (exportSheet) exportProductionSheetTXT(payload);
     if (printMode) printOutput(printMode);
-    await sendDataToSheet(payload);
+    const sync = await sendDataToSheet(payload);
+    if (sync.ok) {
+      const sentToLine = await sendOrderToLineOa(payload);
+      if (sentToLine) setSubmitStatus("ส่งสูตรเข้า Sheet และ LINE OA แล้ว", "ok");
+    }
   } finally {
     isSubmitting = false;
     submitBtns.forEach(btn => {
