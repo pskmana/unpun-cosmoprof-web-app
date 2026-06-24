@@ -189,7 +189,13 @@ function notifyLineOa(ss, payload, order, items) {
     return false;
   }
 
-  const labelUrl = saveLabelImage(payload.labelPng, order.orderId);
+  let labelUrl = "";
+  try {
+    labelUrl = saveLabelImage(payload.labelPng, order.orderId);
+  } catch (err) {
+    // ponytail: a label upload must not block the RD notification.
+    console.warn(`Label upload failed for ${order.orderId}: ${err}`);
+  }
   const formula = items.map(item => `${item.part}. ${item.ingredient} ${item.pct}%`).join("\n");
   const text = [
     "NEW WORKSHOP ORDER",
