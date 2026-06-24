@@ -1302,7 +1302,9 @@ async function renderLabelPreviewCanvas(label, scale = 4) {
   if (clonedLogo) {
     clonedLogo.removeAttribute("alt");
     clonedLogo.removeAttribute("srcset");
-    if (logoDataUrl) clonedLogo.src = logoDataUrl;
+    // Render the logo directly onto the final canvas below. foreignObject can
+    // ignore its mm sizing and inflate image assets during PNG export.
+    clonedLogo.style.visibility = "hidden";
   }
 
   const styles = Array.from(document.querySelectorAll("style"))
@@ -1336,17 +1338,20 @@ async function renderLabelPreviewCanvas(label, scale = 4) {
   const shiftPx = Math.round(BROTHER_EXPORT_SHIFT_LEFT_MM * pxPerMm * scale);
   ctx.drawImage(image, centerOffsetX - shiftPx, centerOffsetY, drawnW, drawnH);
 
-  // SVG foreignObject can omit images in exported PNGs. Composite the actual
-  // brand asset onto the canvas so the printed label always includes its logo.
+  // Draw the original logo at its logical (unscaled) label position. The live
+  // preview is zoomed with CSS, so getBoundingClientRect alone would make the
+  // exported logo 3.35x too large.
   if (sourceLogo && logoDataUrl) {
     try {
       const logoImage = await loadImageFromSrc(logoDataUrl);
       const labelBox = label.getBoundingClientRect();
       const logoBox = sourceLogo.getBoundingClientRect();
-      const logoX = centerOffsetX - shiftPx + Math.round((logoBox.left - labelBox.left) * scale * safeScale);
-      const logoY = centerOffsetY + Math.round((logoBox.top - labelBox.top) * scale * safeScale);
-      const logoW = Math.round(logoBox.width * scale * safeScale);
-      const logoH = Math.round(logoBox.height * scale * safeScale);
+      const previewScaleX = labelBox.width / width;
+      const previewScaleY = labelBox.height / height;
+      const logoX = centerOffsetX - shiftPx + Math.round(((logoBox.left - labelBox.left) / previewScaleX) * scale * safeScale);
+      const logoY = centerOffsetY + Math.round(((logoBox.top - labelBox.top) / previewScaleY) * scale * safeScale);
+      const logoW = Math.round((logoBox.width / previewScaleX) * scale * safeScale);
+      const logoH = Math.round((logoBox.height / previewScaleY) * scale * safeScale);
       if (logoW > 0 && logoH > 0) ctx.drawImage(logoImage, logoX, logoY, logoW, logoH);
     } catch (err) {
       console.warn("Could not composite label logo", err);

@@ -208,7 +208,7 @@ function notifyLineOa(ss, payload, order, items) {
   }
   const formula = items.map(item => {
     const grams = Number(item.grams || (Number(item.pct || 0) * Number(order.netWeight || 0) / 100));
-    return `${item.part}. ${item.ingredient} ${item.pct}% | ${grams.toFixed(2)} g`;
+    return `${item.part}. ${item.ingredient} ${item.pct}% (${grams.toFixed(2)} g)`;
   }).join("\n");
   const text = [
     "NEW WORKSHOP ORDER",
