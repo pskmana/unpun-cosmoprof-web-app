@@ -36,6 +36,8 @@ const ITEM_HEADERS = [
   "grams"
 ];
 
+const LINE_LOG_HEADERS = ["timestamp", "orderId", "recipient", "status", "detail"];
+
 function doGet() {
   return jsonResponse({
     ok: true,
@@ -73,7 +75,7 @@ function doPost(e) {
       }
     }
 
-    const lineNotified = notifyLineOa(payload, orderRow, itemRows);
+    const lineNotified = notifyLineOa(ss, payload, orderRow, itemRows);
 
     return jsonResponse({
       ok: true,
@@ -175,14 +177,17 @@ function normalizeItemRows(payload, orderRow) {
   }));
 }
 
-function notifyLineOa(payload, order, items) {
+function notifyLineOa(ss, payload, order, items) {
   const props = PropertiesService.getScriptProperties();
   const token = props.getProperty("LINE_CHANNEL_ACCESS_TOKEN");
   const recipients = [
     props.getProperty("LINE_ADMIN_TO_ID"),
     props.getProperty("LINE_STAFF_USER_ID")
   ].filter(Boolean).filter((id, index, list) => list.indexOf(id) === index);
-  if (!token || !recipients.length) return false;
+  if (!token || !recipients.length) {
+    logLineDelivery(ss, order.orderId, [{ recipient: "", status: "skipped", detail: "Missing LINE token or admin recipient" }]);
+    return false;
+  }
 
   const labelUrl = saveLabelImage(payload.labelPng, order.orderId);
   const formula = items.map(item => `${item.part}. ${item.ingredient} ${item.pct}%`).join("\n");
@@ -206,31 +211,45 @@ function notifyLineOa(payload, order, items) {
     });
   }
 
-  return recipients.map(recipient => pushLine(token, recipient, messages, text)).some(Boolean);
+  const deliveries = recipients.map(recipient => pushLine(token, recipient, messages, text));
+  logLineDelivery(ss, order.orderId, deliveries);
+  return deliveries.some(delivery => delivery.ok);
 }
 
 function pushLine(token, recipient, messages, fallbackText) {
-  let response = UrlFetchApp.fetch("https://api.line.me/v2/bot/message/push", {
-    method: "post",
-    contentType: "application/json",
-    headers: { Authorization: `Bearer ${token}` },
-    payload: JSON.stringify({ to: recipient, messages }),
-    muteHttpExceptions: true
-  });
-  if (response.getResponseCode() >= 300 && messages.length > 1) {
-    response = UrlFetchApp.fetch("https://api.line.me/v2/bot/message/push", {
+  try {
+    let response = UrlFetchApp.fetch("https://api.line.me/v2/bot/message/push", {
       method: "post",
       contentType: "application/json",
       headers: { Authorization: `Bearer ${token}` },
-      payload: JSON.stringify({ to: recipient, messages: [{ type: "text", text: fallbackText }] }),
+      payload: JSON.stringify({ to: recipient, messages }),
       muteHttpExceptions: true
     });
+    if (response.getResponseCode() >= 300 && messages.length > 1) {
+      response = UrlFetchApp.fetch("https://api.line.me/v2/bot/message/push", {
+        method: "post",
+        contentType: "application/json",
+        headers: { Authorization: `Bearer ${token}` },
+        payload: JSON.stringify({ to: recipient, messages: [{ type: "text", text: fallbackText }] }),
+        muteHttpExceptions: true
+      });
+    }
+    if (response.getResponseCode() >= 300) {
+      const detail = response.getContentText().slice(0, 500);
+      console.warn(`LINE push failed for ${recipient}: ${response.getResponseCode()} ${detail}`);
+      return { recipient, ok: false, status: response.getResponseCode(), detail };
+    }
+    return { recipient, ok: true, status: response.getResponseCode(), detail: "sent" };
+  } catch (err) {
+    return { recipient, ok: false, status: "exception", detail: String(err).slice(0, 500) };
   }
-  if (response.getResponseCode() >= 300) {
-    console.warn(`LINE push failed for ${recipient}: ${response.getResponseCode()} ${response.getContentText()}`);
-    return false;
-  }
-  return true;
+}
+
+function logLineDelivery(ss, orderId, deliveries) {
+  const sheet = getOrCreateSheet(ss, "LineLog", LINE_LOG_HEADERS);
+  sheet.getRange(sheet.getLastRow() + 1, 1, deliveries.length, LINE_LOG_HEADERS.length).setValues(
+    deliveries.map(delivery => [new Date().toISOString(), orderId, delivery.recipient, delivery.status, delivery.detail])
+  );
 }
 
 function handleLineWebhook(payload) {
