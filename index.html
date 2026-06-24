@@ -1455,31 +1455,39 @@ function isAppsScriptUrl(url) {
   return /script\.google\.com|script\.googleusercontent\.com/.test(url);
 }
 
+function postAppsScriptForm(url, envelope) {
+  let frame = document.getElementById("unpun-sync-frame");
+  if (!frame) {
+    frame = document.createElement("iframe");
+    frame.id = "unpun-sync-frame";
+    frame.name = "unpun-sync-frame";
+    frame.hidden = true;
+    document.body.appendChild(frame);
+  }
+  const form = document.createElement("form");
+  form.method = "post";
+  form.action = url;
+  form.target = frame.name;
+  form.enctype = "text/plain";
+  const payload = document.createElement("input");
+  payload.type = "hidden";
+  payload.name = "payload";
+  payload.value = JSON.stringify(envelope);
+  form.appendChild(payload);
+  document.body.appendChild(form);
+  form.submit();
+  form.remove();
+}
+
 async function postToTarget(target, envelope) {
-  const body = JSON.stringify(envelope);
   if (isAppsScriptUrl(target.url)) {
-    // sendBeacon and fetch(..., { keepalive: true }) are capped near 64 KB.
-    // A 300 dpi label PNG is larger than that, so use a normal request for
-    // orders with a label. The old path falsely reported success after a
-    // keepalive failure, leaving both LINE text and image unsent.
-    if (navigator.sendBeacon && body.length < 60000) {
-      const accepted = navigator.sendBeacon(
-        target.url,
-        new Blob([body], { type: "text/plain;charset=utf-8" })
-      );
-      if (accepted) return { target: target.name, ok: true, queued: true };
-    }
-    await fetchWithTimeout(target.url, {
-      method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body,
-      // Do not enable keepalive: label PNG payloads exceed its browser limit.
-      keepalive: false
-    }, Math.max(SYNC_TIMEOUT_MS, 30000));
-    return { target: target.name, ok: true, opaque: true, payloadBytes: body.length };
+    // ponytail: native form POST avoids CORS, beacon size caps, and fetch
+    // redirect hangs. Apps Script receives the same JSON in payload=.
+    postAppsScriptForm(target.url, envelope);
+    return { target: target.name, ok: true, submitted: true };
   }
 
+  const body = JSON.stringify(envelope);
   const response = await fetchWithTimeout(target.url, {
     method: "POST",
     mode: "cors",
@@ -1639,7 +1647,7 @@ async function submitOrder({ printMode = "", exportBrother = false, exportSheet 
       setSubmitStatus("ส่งรายละเอียดเข้า LINE OA แล้ว กำลังแนบฉลาก", "ok");
       // ponytail: send the essential order first; a slow image must never hide it.
       attachLineLabelImage(payload)
-        .then(() => payload.labelPng ? sendDataToSheet(payload) : null)
+        .then(() => payload.labelPng ? sendDataToSheet({ ...payload, action: "attachLabel" }) : null)
         .catch(err => console.warn("Could not attach LINE label image", err));
     }
   } finally {

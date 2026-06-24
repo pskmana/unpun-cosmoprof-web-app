@@ -136,7 +136,8 @@ function doPost(e) {
 
 function parsePayload(e) {
   const raw = e && e.postData && e.postData.contents ? e.postData.contents : "{}";
-  return JSON.parse(raw);
+  const formPayload = raw.match(/^payload=(\{[\s\S]*\})\s*$/);
+  return JSON.parse(formPayload ? formPayload[1] : raw);
 }
 
 function getOrCreateSheet(ss, name, headers) {
