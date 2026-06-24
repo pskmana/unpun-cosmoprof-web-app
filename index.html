@@ -1175,6 +1175,27 @@ function handleSendToLineOa() {
   submitOrder();
 }
 
+async function sendOrderToCurrentLineChat(data) {
+  if (!window.liff || !liff.isInClient() || !liff.isLoggedIn()) return false;
+  const formula = data.formulaItems
+    .map(item => `${item.part}. ${item.ingredient} ${item.pct}% (${(item.pct * data.netWeight / 100).toFixed(2)} g)`)
+    .join("\n");
+  await liff.sendMessages([{
+    type: "text",
+    text: [
+      "NEW WORKSHOP ORDER",
+      `Batch: ${data.batch}`,
+      `Customer: ${data.customer}`,
+      `Product: ${data.product}`,
+      `Net: ${data.netWeight} g | Cost/kg: ${data.cost} THB`,
+      "",
+      "FORMULA",
+      formula
+    ].join("\n").slice(0, 4900)
+  }]);
+  return true;
+}
+
 function csvCell(value) {
   return `"${String(value ?? "").replace(/"/g, '""')}"`;
 }
@@ -1605,6 +1626,11 @@ async function submitOrder({ printMode = "", exportBrother = false, exportSheet 
   try {
     const payload = getOrderPayload();
     if (!wasSent(payload.orderId)) saveOrderLocal(payload);
+    try {
+      await sendOrderToCurrentLineChat(payload);
+    } catch (err) {
+      console.warn("Could not send order through the current LINE chat", err);
+    }
     if (exportBrother) await exportBrotherLabelOnly(payload);
     if (exportSheet) exportProductionSheetTXT(payload);
     if (printMode) printOutput(printMode);
