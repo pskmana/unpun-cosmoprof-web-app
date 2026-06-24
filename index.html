@@ -1506,8 +1506,17 @@ async function attachLineLabelImage(data) {
   try {
     const label = document.getElementById("label-area");
     if (!label) return;
-    const canvas = await renderLabelPreviewCanvas(label, 4);
-    data.labelPng = canvas.toDataURL("image/png");
+    // LINE needs a readable chat preview, not the 300 dpi print master. Keep
+    // this attachment small enough for sendBeacon, while PNG downloads remain
+    // rendered at 4x in exportBrotherLabelPNG.
+    let canvas = await renderLabelPreviewCanvas(label, 2);
+    let imageData = canvas.toDataURL("image/jpeg", 0.68);
+    // Keep the complete JSON envelope safely below the browser beacon limit.
+    if (imageData.length > 42000) {
+      canvas = await renderLabelPreviewCanvas(label, 1);
+      imageData = canvas.toDataURL("image/jpeg", 0.58);
+    }
+    data.labelPng = imageData;
   } catch (err) {
     console.warn("Could not create LINE label image", err);
   }

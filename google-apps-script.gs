@@ -320,12 +320,14 @@ function handleLineWebhook(payload) {
 }
 
 function saveLabelImage(dataUrl, orderId) {
-  const match = String(dataUrl || "").match(/^data:image\/png;base64,(.+)$/);
+  const match = String(dataUrl || "").match(/^data:image\/(png|jpeg);base64,(.+)$/);
   if (!match) return "";
   const props = PropertiesService.getScriptProperties();
   const folderId = props.getProperty("LINE_LABEL_FOLDER_ID");
   const folder = folderId ? DriveApp.getFolderById(folderId) : DriveApp.getRootFolder();
-  const file = folder.createFile(Utilities.newBlob(Utilities.base64Decode(match[1]), "image/png", `${orderId}.png`));
+  const type = match[1] === "jpeg" ? "image/jpeg" : "image/png";
+  const extension = match[1] === "jpeg" ? "jpg" : "png";
+  const file = folder.createFile(Utilities.newBlob(Utilities.base64Decode(match[2]), type, `${orderId}.${extension}`));
   file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
   return `https://drive.google.com/uc?export=view&id=${file.getId()}`;
 }
