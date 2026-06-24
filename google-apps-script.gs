@@ -55,6 +55,25 @@ function authorizeLineDelivery() {
   }).getResponseCode();
 }
 
+// Run from the Apps Script editor when diagnosing LINE delivery. This sends
+// one text-only test message to the same staff recipients as workshop orders.
+function testLineDelivery() {
+  const props = PropertiesService.getScriptProperties();
+  const token = props.getProperty("LINE_CHANNEL_ACCESS_TOKEN");
+  const recipients = [
+    props.getProperty("LINE_ADMIN_TO_ID"),
+    props.getProperty("LINE_STAFF_USER_ID")
+  ].filter(Boolean).filter((id, index, list) => list.indexOf(id) === index);
+  if (!token || !recipients.length) throw new Error("Missing LINE token or staff recipient");
+
+  const text = `UNPUN Formula Studio delivery test\n${new Date().toISOString()}\nLINE notification is connected.`;
+  const deliveries = recipients.map(recipient => pushLine(token, recipient, [{ type: "text", text }], text));
+  Logger.log(JSON.stringify(deliveries));
+  const failed = deliveries.filter(delivery => !delivery.ok);
+  if (failed.length) throw new Error(JSON.stringify(failed));
+  return JSON.stringify(deliveries);
+}
+
 function doPost(e) {
   let payload;
   try {
