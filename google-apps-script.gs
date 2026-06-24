@@ -62,8 +62,11 @@ function testLineDelivery() {
   const token = props.getProperty("LINE_CHANNEL_ACCESS_TOKEN");
   const recipients = [
     props.getProperty("LINE_ADMIN_TO_ID"),
-    props.getProperty("LINE_STAFF_USER_ID")
-  ].filter(Boolean).filter((id, index, list) => list.indexOf(id) === index);
+    props.getProperty("LINE_STAFF_USER_ID"),
+    order.lineId
+  ]
+    .filter(id => /^[UCR][0-9a-f]{32}$/i.test(String(id || "")))
+    .filter((id, index, list) => list.indexOf(id) === index);
   if (!token || !recipients.length) throw new Error("Missing LINE token or staff recipient");
 
   const text = `UNPUN Formula Studio delivery test\n${new Date().toISOString()}\nLINE notification is connected.`;
