@@ -45,6 +45,16 @@ function doGet() {
   });
 }
 
+// Run once from the Apps Script editor to authorize LINE's HTTPS API.
+function authorizeLineDelivery() {
+  const token = PropertiesService.getScriptProperties().getProperty("LINE_CHANNEL_ACCESS_TOKEN");
+  if (!token) throw new Error("Missing LINE_CHANNEL_ACCESS_TOKEN");
+  return UrlFetchApp.fetch("https://api.line.me/v2/bot/info", {
+    headers: { Authorization: `Bearer ${token}` },
+    muteHttpExceptions: true
+  }).getResponseCode();
+}
+
 function doPost(e) {
   let payload;
   try {
@@ -196,7 +206,10 @@ function notifyLineOa(ss, payload, order, items) {
     // ponytail: a label upload must not block the RD notification.
     console.warn(`Label upload failed for ${order.orderId}: ${err}`);
   }
-  const formula = items.map(item => `${item.part}. ${item.ingredient} ${item.pct}%`).join("\n");
+  const formula = items.map(item => {
+    const grams = Number(item.grams || (Number(item.pct || 0) * Number(order.netWeight || 0) / 100));
+    return `${item.part}. ${item.ingredient} ${item.pct}% | ${grams.toFixed(2)} g`;
+  }).join("\n");
   const text = [
     "NEW WORKSHOP ORDER",
     `Order: ${order.orderId}`,
