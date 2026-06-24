@@ -60,13 +60,7 @@ function authorizeLineDelivery() {
 function testLineDelivery() {
   const props = PropertiesService.getScriptProperties();
   const token = props.getProperty("LINE_CHANNEL_ACCESS_TOKEN");
-  const recipients = [
-    props.getProperty("LINE_ADMIN_TO_ID"),
-    props.getProperty("LINE_STAFF_USER_ID"),
-    order.lineId
-  ]
-    .filter(id => /^[UCR][0-9a-f]{32}$/i.test(String(id || "")))
-    .filter((id, index, list) => list.indexOf(id) === index);
+  const recipients = getLineRecipients(props);
   if (!token || !recipients.length) throw new Error("Missing LINE token or staff recipient");
 
   const text = `UNPUN Formula Studio delivery test\n${new Date().toISOString()}\nLINE notification is connected.`;
@@ -221,10 +215,7 @@ function normalizeItemRows(payload, orderRow) {
 function notifyLineOa(ss, payload, order, items) {
   const props = PropertiesService.getScriptProperties();
   const token = props.getProperty("LINE_CHANNEL_ACCESS_TOKEN");
-  const recipients = [
-    props.getProperty("LINE_ADMIN_TO_ID"),
-    props.getProperty("LINE_STAFF_USER_ID")
-  ].filter(Boolean).filter((id, index, list) => list.indexOf(id) === index);
+  const recipients = getLineRecipients(props);
   if (!token || !recipients.length) {
     logLineDelivery(ss, order.orderId, [{ recipient: "", status: "skipped", detail: "Missing LINE token or admin recipient" }]);
     return false;
@@ -306,20 +297,31 @@ function logLineDelivery(ss, orderId, deliveries) {
   );
 }
 
+function getLineRecipients(props) {
+  // The admin group is a fixed operational destination. Never derive it from
+  // the customer who most recently sent a webhook event.
+  return [
+    props.getProperty("LINE_ADMIN_GROUP_ID"),
+    props.getProperty("LINE_STAFF_USER_ID")
+  ]
+    .filter(id => /^[UCR][0-9a-f]{32}$/i.test(String(id || "")))
+    .filter((id, index, list) => list.indexOf(id) === index);
+}
+
 function handleLineWebhook(payload) {
   const props = PropertiesService.getScriptProperties();
   const sources = payload.events
     .map(event => event && event.source)
     .filter(Boolean);
-  const adminTarget = sources
-    .map(source => source.groupId || source.roomId || source.userId || "")
+  const adminGroup = sources
+    .map(source => source.groupId || "")
     .find(Boolean);
-  if (adminTarget) props.setProperty("LINE_ADMIN_TO_ID", adminTarget);
+  if (adminGroup) props.setProperty("LINE_ADMIN_GROUP_ID", adminGroup);
 
   return jsonResponse({
     ok: true,
     lineWebhook: true,
-    adminTargetSaved: Boolean(adminTarget)
+    adminGroupSaved: Boolean(adminGroup)
   });
 }
 
