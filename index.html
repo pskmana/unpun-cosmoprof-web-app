@@ -478,6 +478,9 @@ const SYNC_TIMEOUT_MS = 45000;
 const LABEL_QR_URL = "https://www.facebook.com/profile.php?id=100056421283320";
 const BROTHER_EXPORT_SHIFT_LEFT_MM = 0.8;
 const BROTHER_EXPORT_SAFE_SCALE = 0.94;
+// CSS pixels are 96 dpi. 6.25x yields a 600 dpi master (about 900 x 1535 px
+// for the 38 x 65 mm label), exceeding the QL-800's 300 x 600 dpi output.
+const LABEL_MASTER_SCALE = 6.25;
 let qrInstance = null;
 let currentStep = 1;
 let isSubmitting = false;
@@ -1225,7 +1228,7 @@ async function exportBrotherLabelPNG(data) {
   }
   try {
     await document.fonts.ready;
-    const canvas = await renderLabelPreviewCanvas(label, 4);
+    const canvas = await renderLabelPreviewCanvas(label, LABEL_MASTER_SCALE);
     const a = document.createElement("a");
     a.href = canvas.toDataURL("image/png");
     a.download = `brother-label-${safeFilePart(data.batch)}-${safeFilePart(data.customerCode)}.png`;
@@ -1308,15 +1311,9 @@ async function renderLabelPreviewCanvas(label, scale = 4) {
   const sourceQr = label.querySelector("#qr");
   const clonedQr = clone.querySelector("#qr");
   if (sourceQr && clonedQr) {
-    const qrImg = document.createElement("img");
-    qrImg.src = sourceQr.toDataURL("image/png");
-    qrImg.id = "qr";
-    qrImg.style.cssText = clonedQr.style.cssText || "";
-    qrImg.style.width = getComputedStyle(sourceQr).width;
-    qrImg.style.height = getComputedStyle(sourceQr).height;
-    qrImg.style.justifySelf = getComputedStyle(sourceQr).justifySelf;
-    qrImg.style.imageRendering = "pixelated";
-    clonedQr.replaceWith(qrImg);
+    // Composite the QR directly onto the final canvas below. Rendering it
+    // through SVG/foreignObject softens the modules and breaks scanning.
+    clonedQr.style.visibility = "hidden";
   }
 
   const sourceLogo = label.querySelector(".lbl-logo");
@@ -1379,6 +1376,22 @@ async function renderLabelPreviewCanvas(label, scale = 4) {
     } catch (err) {
       console.warn("Could not composite label logo", err);
     }
+  }
+
+  // Keep QR modules square and lossless at the final master resolution.
+  if (sourceQr) {
+    const labelBox = label.getBoundingClientRect();
+    const qrBox = sourceQr.getBoundingClientRect();
+    const previewScaleX = labelBox.width / width;
+    const previewScaleY = labelBox.height / height;
+    const qrX = centerOffsetX - shiftPx + Math.round(((qrBox.left - labelBox.left) / previewScaleX) * scale * safeScale);
+    const qrY = centerOffsetY + Math.round(((qrBox.top - labelBox.top) / previewScaleY) * scale * safeScale);
+    const qrW = Math.round((qrBox.width / previewScaleX) * scale * safeScale);
+    const qrH = Math.round((qrBox.height / previewScaleY) * scale * safeScale);
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(sourceQr, qrX, qrY, qrW, qrH);
+    ctx.restore();
   }
   return canvas;
 }
@@ -1539,7 +1552,7 @@ async function attachLineLabelImage(data) {
     if (!label) return;
     // LINE must receive the same lossless artwork as the Brother download.
     // JPEG compression made the small QR modules unreadable in chat.
-    const canvas = await renderLabelPreviewCanvas(label, 4);
+    const canvas = await renderLabelPreviewCanvas(label, LABEL_MASTER_SCALE);
     data.labelPng = canvas.toDataURL("image/png");
   } catch (err) {
     console.warn("Could not create LINE label image", err);
