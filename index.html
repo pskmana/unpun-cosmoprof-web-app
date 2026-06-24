@@ -1437,8 +1437,10 @@ function isAppsScriptUrl(url) {
 async function postToTarget(target, envelope) {
   const body = JSON.stringify(envelope);
   if (isAppsScriptUrl(target.url)) {
-    // Apps Script redirects POST responses to a Google content URL. sendBeacon
-    // sends the order without exposing that redirect as a browser-side failure.
+    // sendBeacon and fetch(..., { keepalive: true }) are capped near 64 KB.
+    // A 300 dpi label PNG is larger than that, so use a normal request for
+    // orders with a label. The old path falsely reported success after a
+    // keepalive failure, leaving both LINE text and image unsent.
     if (navigator.sendBeacon && body.length < 60000) {
       const accepted = navigator.sendBeacon(
         target.url,
@@ -1446,20 +1448,15 @@ async function postToTarget(target, envelope) {
       );
       if (accepted) return { target: target.name, ok: true, queued: true };
     }
-    try {
-      await fetchWithTimeout(target.url, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body
-      });
-      return { target: target.name, ok: true, opaque: true };
-    } catch (err) {
-      // Google may reject the browser after its redirect even though doPost
-      // has already received the order. Keep an offline request retryable.
-      if (navigator.onLine) return { target: target.name, ok: true, opaque: true };
-      throw err;
-    }
+    await fetchWithTimeout(target.url, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body,
+      // Do not enable keepalive: label PNG payloads exceed its browser limit.
+      keepalive: false
+    }, Math.max(SYNC_TIMEOUT_MS, 30000));
+    return { target: target.name, ok: true, opaque: true, payloadBytes: body.length };
   }
 
   const response = await fetchWithTimeout(target.url, {
