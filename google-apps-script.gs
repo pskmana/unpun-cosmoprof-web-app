@@ -65,6 +65,14 @@ function doPost(e) {
     return jsonResponse({ ok: false, error: String(err) });
   }
 
+  // Internal delivery check: verifies the rendered LINE text without writing
+  // an order or notifying staff. It is useful when validating a new deploy.
+  if (payload && payload.dryRun === true) {
+    const orderRow = normalizeOrderRow(payload);
+    const itemRows = normalizeItemRows(payload, orderRow);
+    return jsonResponse({ ok: true, text: buildLineOrderText(orderRow, itemRows) });
+  }
+
   const lock = LockService.getScriptLock();
   lock.waitLock(15000);
 
@@ -206,21 +214,7 @@ function notifyLineOa(ss, payload, order, items) {
     // ponytail: a label upload must not block the RD notification.
     console.warn(`Label upload failed for ${order.orderId}: ${err}`);
   }
-  const formula = items.map(item => {
-    const grams = Number(item.grams || (Number(item.pct || 0) * Number(order.netWeight || 0) / 100));
-    return `${item.part}. ${item.ingredient} ${item.pct}% (${grams.toFixed(2)} g)`;
-  }).join("\n");
-  const text = [
-    "NEW WORKSHOP ORDER",
-    `Order: ${order.orderId}`,
-    `Batch: ${order.batch}`,
-    `Customer: ${order.customerName}`,
-    `Product: ${order.product}`,
-    `Net: ${order.netWeight} g | Cost/kg: ${order.costPerKg} THB`,
-    "",
-    "FORMULA",
-    formula
-  ].join("\n").slice(0, 4900);
+  const text = buildLineOrderText(order, items);
   const messages = [{ type: "text", text }];
   if (labelUrl) {
     messages.unshift({
@@ -233,6 +227,24 @@ function notifyLineOa(ss, payload, order, items) {
   const deliveries = recipients.map(recipient => pushLine(token, recipient, messages, text));
   logLineDelivery(ss, order.orderId, deliveries);
   return deliveries.some(delivery => delivery.ok);
+}
+
+function buildLineOrderText(order, items) {
+  const formula = items.map(item => {
+    const grams = Number(item.grams || (Number(item.pct || 0) * Number(order.netWeight || 0) / 100));
+    return `${item.part}. ${item.ingredient} ${item.pct}% (${grams.toFixed(2)} g)`;
+  }).join("\n");
+  return [
+    "NEW WORKSHOP ORDER",
+    `Order: ${order.orderId}`,
+    `Batch: ${order.batch}`,
+    `Customer: ${order.customerName}`,
+    `Product: ${order.product}`,
+    `Net: ${order.netWeight} g | Cost/kg: ${order.costPerKg} THB`,
+    "",
+    "FORMULA",
+    formula
+  ].join("\n").slice(0, 4900);
 }
 
 function pushLine(token, recipient, messages, fallbackText) {
