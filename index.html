@@ -510,10 +510,8 @@ async function connectLineProfile() {
   if (!LINE_LIFF_ID || !window.liff) return;
   try {
     await liff.init({ liffId: LINE_LIFF_ID });
-    if (!liff.isLoggedIn()) {
-      liff.login();
-      return;
-    }
+    // Keep the workshop public: profile autofill is optional, not a login gate.
+    if (!liff.isLoggedIn()) return;
     const profile = await liff.getProfile();
     const name = profile.displayName.trim().split(/\s+/);
     const firstName = document.getElementById("custName");
