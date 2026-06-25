@@ -304,11 +304,10 @@ function logLineDelivery(ss, orderId, deliveries) {
 }
 
 function getLineRecipients(props) {
-  // The admin group is a fixed operational destination. Never derive it from
-  // the customer who most recently sent a webhook event.
+  // The admin group is the only operational destination; sending to staff users
+  // burns LINE OA quota again for the same order.
   return [
-    props.getProperty("LINE_ADMIN_GROUP_ID"),
-    props.getProperty("LINE_STAFF_USER_ID")
+    props.getProperty("LINE_ADMIN_GROUP_ID")
   ]
     .filter(id => /^[UCR][0-9a-f]{32}$/i.test(String(id || "")))
     .filter((id, index, list) => list.indexOf(id) === index);
