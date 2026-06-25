@@ -90,16 +90,22 @@ function doPost(e) {
   }
 
   const lock = LockService.getScriptLock();
-  lock.waitLock(15000);
+  let locked = false;
+  let ss;
+  let orderRow;
+  let itemRows;
+  let duplicate;
 
   try {
-    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    lock.waitLock(8000);
+    locked = true;
+    ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     const ordersSheet = getOrCreateSheet(ss, "Orders", ORDER_HEADERS);
     const itemsSheet = getOrCreateSheet(ss, "Items", ITEM_HEADERS);
 
-    const orderRow = normalizeOrderRow(payload);
-    const duplicate = hasExistingOrder(ordersSheet, orderRow.orderId);
-    const itemRows = normalizeItemRows(payload, orderRow);
+    orderRow = normalizeOrderRow(payload);
+    duplicate = hasExistingOrder(ordersSheet, orderRow.orderId);
+    itemRows = normalizeItemRows(payload, orderRow);
     if (!duplicate) {
       ordersSheet.appendRow(ORDER_HEADERS.map(header => orderRow[header] ?? ""));
       if (itemRows.length) {
@@ -108,24 +114,24 @@ function doPost(e) {
           .setValues(itemRows.map(row => ITEM_HEADERS.map(header => row[header] ?? "")));
       }
     }
-
-    const lineNotified = notifyLineOa(ss, payload, orderRow, itemRows);
-
-    return jsonResponse({
-      ok: true,
-      duplicate,
-      orderId: orderRow.orderId,
-      itemCount: itemRows.length,
-      lineNotified
-    });
   } catch (err) {
     return jsonResponse({
       ok: false,
       error: String(err && err.stack ? err.stack : err)
     });
   } finally {
-    lock.releaseLock();
+    if (locked) lock.releaseLock();
   }
+
+  const lineNotified = notifyLineOa(ss, payload, orderRow, itemRows);
+
+  return jsonResponse({
+    ok: true,
+    duplicate,
+    orderId: orderRow.orderId,
+    itemCount: itemRows.length,
+    lineNotified
+  });
 }
 
 function parsePayload(e) {

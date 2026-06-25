@@ -1650,13 +1650,11 @@ async function submitOrder({ printMode = "", exportBrother = false, exportSheet 
     if (exportBrother) await exportBrotherLabelOnly(payload);
     if (exportSheet) exportProductionSheetTXT(payload);
     if (printMode) printOutput(printMode);
+    setSubmitStatus("กำลังเตรียมข้อมูลและฉลากสำหรับ LINE OA...", "warn");
+    await attachLineLabelImage(payload);
     const sync = await sendDataToSheet(payload);
     if (sync.ok) {
-      setSubmitStatus("ส่งรายละเอียดเข้า LINE OA แล้ว กำลังแนบฉลาก", "ok");
-      // ponytail: send the essential order first; a slow image must never hide it.
-      attachLineLabelImage(payload)
-        .then(() => payload.labelPng ? sendDataToSheet({ ...payload, action: "attachLabel" }) : null)
-        .catch(err => console.warn("Could not attach LINE label image", err));
+      setSubmitStatus("ส่งรายละเอียดและฉลากเข้า LINE OA แล้ว", "ok");
     }
   } finally {
     isSubmitting = false;
